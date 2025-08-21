@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0f1320" />
 <title>Coin Flip Betting Game — Web</title>
 <link rel="icon" href="data:," />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -13,38 +14,82 @@
   }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(120deg,#0b0f1c 0%, #121a2f 60%, #0b0f1c 100%);color:var(--text);display:flex;align-items:center;justify-content:center;padding:20px}
-  .app{width:min(1100px,100%);background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 18px 12px}
+  body{
+    margin:0;
+    font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+    background:linear-gradient(120deg,#0b0f1c 0%, #121a2f 60%, #0b0f1c 100%);
+    color:var(--text);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    padding-left:calc(20px + env(safe-area-inset-left,0));
+    padding-right:calc(20px + env(safe-area-inset-right,0));
+    padding-top:calc(20px + env(safe-area-inset-top,0));
+    padding-bottom:calc(20px + env(safe-area-inset-bottom,0));
+  }
+  .app{width:min(1100px,100%);background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
   .header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:6px 6px 0}
-  .title{font-weight:800;letter-spacing:.3px;font-size:20px;display:flex;align-items:center;gap:10px}
-  .pill{background:#1d2540;color:var(--muted);border-radius:999px;padding:6px 12px;font-size:12px}
+  .title{font-weight:800;letter-spacing:.3px;font-size:clamp(18px,2.2vw,22px);display:flex;align-items:center;gap:10px}
+  .pill{background:#1d2540;color:var(--muted);border-radius:999px;padding:6px 12px;font-size:12px;white-space:nowrap}
   .stats{display:flex;gap:10px;flex-wrap:wrap}
   .stat{background:#10162a;padding:10px 12px;border-radius:12px;min-width:140px;display:flex;flex-direction:column;gap:6px}
   .stat .label{color:var(--muted);font-size:12px}
   .stat .value{font-weight:700;font-size:18px}
-  .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin-top:14px}
+
+  /* FLUID GRID */
+  .controls{display:grid;grid-template-columns:repeat(auto-fit, minmax(240px,1fr));gap:12px;margin-top:14px}
   .card{background:#0f1529;border:1px solid #1f2a48;border-radius:14px;padding:12px}
   .group-title{color:var(--muted);font-size:12px;margin-bottom:8px;letter-spacing:.2px}
   .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  input[type="text"]{background:#0b1122;color:var(--text);border:1px solid #263257;padding:10px 12px;border-radius:10px;outline:none;width:140px}
+
+  /* Inputs & buttons */
+  input[type="text"]{
+    background:#0b1122;color:var(--text);border:1px solid #263257;
+    padding:12px 14px;border-radius:10px;outline:none;width:100%;font-size:16px; /* avoid iOS zoom */
+  }
   .hint{font-size:12px;color:var(--muted);margin-top:6px}
-  .btn{background:#0b1122;border:1px solid #263257;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;transition:.15s ease;font-weight:600}
+  .btn{
+    background:#0b1122;border:1px solid #263257;color:var(--text);
+    padding:12px 16px;border-radius:12px;cursor:pointer;transition:.15s ease;font-weight:700;min-height:44px;
+  }
   .btn:hover{transform:translateY(-1px);border-color:#3451a3}
   .btn.primary{background:linear-gradient(135deg,#2b6cb0,#4299e1);border:none}
   .btn.success{background:linear-gradient(135deg,#2f855a,#48bb78);border:none}
   .btn.warn{background:linear-gradient(135deg,#b7791f,#ed8936);border:none}
   .btn.danger{background:linear-gradient(135deg,#9b2c2c,#f56565);border:none}
   .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-  .range-row{display:flex;align-items:center;gap:10px;margin-top:10px}
-  .range-row input[type="range"]{width:260px}
+
+  .range-row{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .range-row input[type="range"]{flex:1;min-width:160px}
   .range-row .label{font-variant-numeric:tabular-nums;color:var(--muted)}
-  #chart{height:360px}
-  .footer{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;padding:8px 6px 0}
+
+  /* Charts */
+  #chart{height:min(42vh, 380px)}
+  .footer{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;padding:8px 6px 0}
+
   dialog{border:none;border-radius:16px;padding:0;max-width:min(720px,95vw);width:100%;background:#0f1529;color:var(--text);box-shadow:var(--shadow)}
   .dlg-body{padding:16px}
   .dlg-title{font-weight:800;font-size:18px;margin:6px 0 2px}
   .dlg-sub{color:var(--muted);font-size:12px;margin-bottom:10px}
   .dlg-actions{display:flex;gap:8px;justify-content:flex-end;padding:0 16px 16px}
+
+  @media (max-width:560px){.row .btn{flex:1}}
+  @media (max-width:420px){.row .btn{width:100%}}
+  @media (prefers-reduced-motion:reduce){.btn:hover{transform:none}}
+
+  /* --- COMPACT MODE --- */
+  body.compact .app{padding:10px}
+  body.compact .header{gap:6px;padding:4px 4px 0;align-items:flex-start}
+  body.compact .title{font-size:16px}
+  body.compact .title .pill{display:none}
+  body.compact .stats{width:100%;gap:6px}
+  body.compact .stat{flex:1;min-width:0;padding:8px 10px}
+  body.compact .stat .value{font-size:15px}
+  body.compact .controls{grid-template-columns:1fr}
+  body.compact .row .btn{width:100%}
+  body.compact .card{padding:10px}
+  body.compact .range-row{gap:8px}
+  body.compact #chart{height:min(58vh,420px)}
+  @media(max-width:480px){body.compact .footer{flex-direction:column;align-items:flex-start}}
 </style>
 </head>
 <body>
@@ -56,11 +101,12 @@
         <div class="stat"><div class="label">Round</div><div class="value" id="round">0</div></div>
         <div class="stat"><div class="label">Outcome</div><div class="value" id="outcome">Welcome! Enter a bet and click Flip.</div></div>
       </div>
+      <button class="btn" id="compactBtn" aria-pressed="false">Compact: Off</button>
     </div>
 
     <div class="controls">
       <!-- Bet Mode -->
-      <div class="card" style="grid-column: span 3;">
+      <div class="card">
         <div class="group-title">Bet Mode</div>
         <div class="row">
           <label><input type="radio" name="mode" value="amount" checked> $ Amount</label>
@@ -69,11 +115,9 @@
       </div>
 
       <!-- Bet Input + Slider -->
-      <div class="card" style="grid-column: span 5;">
+      <div class="card">
         <div class="group-title">Bet</div>
-        <div class="row">
-          <input id="bet" type="text" value="0" inputmode="decimal" />
-        </div>
+        <div class="row"><input id="bet" type="text" value="0" inputmode="decimal" /></div>
         <div class="range-row">
           <span class="label" id="betSliderLabel">$0.00</span>
           <input id="betSlider" type="range" min="0" max="100" step="0.01" value="0" />
@@ -83,7 +127,7 @@
       </div>
 
       <!-- Actions + Speed -->
-      <div class="card" style="grid-column: span 4;">
+      <div class="card">
         <div class="group-title">Actions</div>
         <div class="row" style="gap:10px;">
           <button class="btn primary" id="flipBtn">Flip</button>
@@ -100,7 +144,7 @@
       </div>
 
       <!-- Chart -->
-      <div class="card" style="grid-column: span 12;">
+      <div class="card" style="grid-column:1/-1">
         <div class="group-title">Wealth Over Time</div>
         <div id="chart"></div>
       </div>
@@ -117,7 +161,7 @@
     <div class="dlg-body">
       <div class="dlg-title" id="dlgTitle">Game Over</div>
       <div class="dlg-sub" id="dlgSub">Wealth history from the beginning:</div>
-      <div id="finalChart" style="height:280px;"></div>
+      <div id="finalChart" style="height:min(38vh,320px)"></div>
     </div>
     <div class="dlg-actions">
       <button class="btn" id="playAgainBtn">Play Again</button>
@@ -131,9 +175,7 @@
       <div class="dlg-title" id="warnTitle">Invalid Bet</div>
       <div class="dlg-sub" id="warnMsg">You cannot bet more than your current wealth.</div>
     </div>
-    <div class="dlg-actions">
-      <button class="btn" id="warnOkBtn">OK</button>
-    </div>
+    <div class="dlg-actions"><button class="btn" id="warnOkBtn">OK</button></div>
   </dialog>
 
 <script>
@@ -179,6 +221,7 @@
   const closeBtn = document.getElementById('closeBtn');
 
   const modeRadios = [...document.querySelectorAll('input[name="mode"]')];
+  const compactBtn = document.getElementById('compactBtn');
 
   // ------- Utils -------
   const fmt = (dollars) => `$${dollars.toFixed(2)}`;
@@ -452,6 +495,25 @@
     autoBtn.disabled = false; stopBtn.disabled = true;
   }
 
+  // ------- Compact mode -------
+  function applyCompact(on){
+    document.body.classList.toggle('compact', on);
+    if (compactBtn){
+      compactBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      compactBtn.textContent = on ? 'Compact: On' : 'Compact: Off';
+    }
+    try { Plotly.Plots.resize('chart'); } catch {}
+  }
+  const savedCompact = localStorage.getItem('compact') === '1';
+  applyCompact(savedCompact);
+  if (compactBtn){
+    compactBtn.addEventListener('click', () => {
+      const nowOn = !document.body.classList.contains('compact');
+      applyCompact(nowOn);
+      localStorage.setItem('compact', nowOn ? '1' : '0');
+    });
+  }
+
   // ------- Events -------
   flipBtn.addEventListener('click', flipOnce);
   newBtn.addEventListener('click', newGame);
@@ -517,6 +579,11 @@
   });
   warnOkBtn.addEventListener('click', () => {
     if (warnDialog.close) warnDialog.close(); else warnDialog.removeAttribute('open');
+  });
+
+  // Resize Plotly on orientation change
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => { try{ Plotly.Plots.resize('chart'); }catch{} }, 250);
   });
 
   // ------- Init -------
