@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Coin Flip Betting Game — Web</title>
+<link rel="icon" href="data:," />
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1320; --card:#151b2b; --text:#e8ecf3; --muted:#9ea8bd; --shadow:0 10px 30px rgba(0,0,0,.35);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(120deg,#0b0f1c 0%, #121a2f 60%, #0b0f1c 100%);color:var(--text);display:flex;align-items:center;justify-content:center;padding:20px}
+  .app{width:min(1100px,100%);background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 18px 12px}
+  .header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:6px 6px 0}
+  .title{font-weight:800;letter-spacing:.3px;font-size:20px;display:flex;align-items:center;gap:10px}
+  .pill{background:#1d2540;color:var(--muted);border-radius:999px;padding:6px 12px;font-size:12px}
+  .stats{display:flex;gap:10px;flex-wrap:wrap}
+  .stat{background:#10162a;padding:10px 12px;border-radius:12px;min-width:140px;display:flex;flex-direction:column;gap:6px}
+  .stat .label{color:var(--muted);font-size:12px}
+  .stat .value{font-weight:700;font-size:18px}
+  .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin-top:14px}
+  .card{background:#0f1529;border:1px solid #1f2a48;border-radius:14px;padding:12px}
+  .group-title{color:var(--muted);font-size:12px;margin-bottom:8px;letter-spacing:.2px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  input[type="text"]{background:#0b1122;color:var(--text);border:1px solid #263257;padding:10px 12px;border-radius:10px;outline:none;width:140px}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .btn{background:#0b1122;border:1px solid #263257;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;transition:.15s ease;font-weight:600}
+  .btn:hover{transform:translateY(-1px);border-color:#3451a3}
+  .btn.primary{background:linear-gradient(135deg,#2b6cb0,#4299e1);border:none}
+  .btn.success{background:linear-gradient(135deg,#2f855a,#48bb78);border:none}
+  .btn.warn{background:linear-gradient(135deg,#b7791f,#ed8936);border:none}
+  .btn.danger{background:linear-gradient(135deg,#9b2c2c,#f56565);border:none}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .range-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .range-row input[type="range"]{width:260px}
+  .range-row .label{font-variant-numeric:tabular-nums;color:var(--muted)}
+  #chart{height:360px}
+  .footer{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;padding:8px 6px 0}
+  dialog{border:none;border-radius:16px;padding:0;max-width:min(720px,95vw);width:100%;background:#0f1529;color:var(--text);box-shadow:var(--shadow)}
+  .dlg-body{padding:16px}
+  .dlg-title{font-weight:800;font-size:18px;margin:6px 0 2px}
+  .dlg-sub{color:var(--muted);font-size:12px;margin-bottom:10px}
+  .dlg-actions{display:flex;gap:8px;justify-content:flex-end;padding:0 16px 16px}
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="title">🪙 Coin Flip Betting <span class="pill">Biased coin • Heads 60% / Tails 40%</span></div>
+      <div class="stats">
+        <div class="stat"><div class="label">Wealth</div><div class="value" id="wealth">$100.00</div></div>
+        <div class="stat"><div class="label">Round</div><div class="value" id="round">0</div></div>
+        <div class="stat"><div class="label">Outcome</div><div class="value" id="outcome">Welcome! Enter a bet and click Flip.</div></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <!-- Bet Mode -->
+      <div class="card" style="grid-column: span 3;">
+        <div class="group-title">Bet Mode</div>
+        <div class="row">
+          <label><input type="radio" name="mode" value="amount" checked> $ Amount</label>
+          <label><input type="radio" name="mode" value="percent"> % of Wealth</label>
+        </div>
+      </div>
+
+      <!-- Bet Input + Slider -->
+      <div class="card" style="grid-column: span 5;">
+        <div class="group-title">Bet</div>
+        <div class="row">
+          <input id="bet" type="text" value="0" inputmode="decimal" />
+        </div>
+        <div class="range-row">
+          <span class="label" id="betSliderLabel">$0.00</span>
+          <input id="betSlider" type="range" min="0" max="100" step="0.01" value="0" />
+          <span class="label" id="betSliderMax">max: $100.00</span>
+        </div>
+        <div class="hint" id="hint"></div>
+      </div>
+
+      <!-- Actions + Speed -->
+      <div class="card" style="grid-column: span 4;">
+        <div class="group-title">Actions</div>
+        <div class="row" style="gap:10px;">
+          <button class="btn primary" id="flipBtn">Flip</button>
+          <button class="btn success" id="autoBtn">Auto Play</button>
+          <button class="btn warn" id="stopBtn" disabled>Stop Auto</button>
+          <button class="btn" id="newBtn">New Game</button>
+          <button class="btn danger" id="quitBtn">Quit</button>
+        </div>
+        <div class="range-row">
+          <span>Speed</span>
+          <input id="speed" type="range" min="100" max="1500" step="50" value="700" />
+          <span class="label"><span id="msLabel">700</span> ms / flip</span>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card" style="grid-column: span 12;">
+        <div class="group-title">Wealth Over Time</div>
+        <div id="chart"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>Tip: You can type <b>10%</b> directly in the Bet box (works in either mode).</div>
+      <div>Made for desktop & mobile • No data leaves your device</div>
+    </div>
+  </div>
+
+  <!-- End Game Dialog -->
+  <dialog id="endDialog">
+    <div class="dlg-body">
+      <div class="dlg-title" id="dlgTitle">Game Over</div>
+      <div class="dlg-sub" id="dlgSub">Wealth history from the beginning:</div>
+      <div id="finalChart" style="height:280px;"></div>
+    </div>
+    <div class="dlg-actions">
+      <button class="btn" id="playAgainBtn">Play Again</button>
+      <button class="btn danger" id="closeBtn">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Warning Dialog -->
+  <dialog id="warnDialog">
+    <div class="dlg-body">
+      <div class="dlg-title" id="warnTitle">Invalid Bet</div>
+      <div class="dlg-sub" id="warnMsg">You cannot bet more than your current wealth.</div>
+    </div>
+    <div class="dlg-actions">
+      <button class="btn" id="warnOkBtn">OK</button>
+    </div>
+  </dialog>
+
+<script>
+(() => {
+  // ------- Money as integer cents for exactness -------
+  const toCents = (x) => Math.round((+x) * 100);
+  const centsToDollars = (c) => c / 100;
+
+  // ------- State (in cents) -------
+  let wealthC = 10000;         // $100.00
+  let history = [centsToDollars(wealthC)]; // store dollars for chart
+  let roundNum = 0;
+  let autoTimer = null;
+  let autoDelayMs = 700;
+
+  // ------- DOM -------
+  const elWealth = document.getElementById('wealth');
+  const elRound  = document.getElementById('round');
+  const elOutcome= document.getElementById('outcome');
+  const elBet    = document.getElementById('bet');
+  const elHint   = document.getElementById('hint');
+  const flipBtn  = document.getElementById('flipBtn');
+  const autoBtn  = document.getElementById('autoBtn');
+  const stopBtn  = document.getElementById('stopBtn');
+  const newBtn   = document.getElementById('newBtn');
+  const quitBtn  = document.getElementById('quitBtn');
+  const speed    = document.getElementById('speed');
+  const msLabel  = document.getElementById('msLabel');
+  const endDialog= document.getElementById('endDialog');
+  const dlgTitle = document.getElementById('dlgTitle');
+  const finalChart = document.getElementById('finalChart');
+
+  const warnDialog = document.getElementById('warnDialog');
+  const warnTitle  = document.getElementById('warnTitle');
+  const warnMsg    = document.getElementById('warnMsg');
+  const warnOkBtn  = document.getElementById('warnOkBtn');
+
+  const betSlider      = document.getElementById('betSlider');
+  const betSliderLabel = document.getElementById('betSliderLabel');
+  const betSliderMax   = document.getElementById('betSliderMax');
+
+  const playAgainBtn = document.getElementById('playAgainBtn');
+  const closeBtn = document.getElementById('closeBtn');
+
+  const modeRadios = [...document.querySelectorAll('input[name="mode"]')];
+
+  // ------- Utils -------
+  const fmt = (dollars) => `$${dollars.toFixed(2)}`;
+  const currentMode = () => (modeRadios.find(r => r.checked)?.value || 'amount');
+
+  function updateStats(outcomeText=null){
+    elWealth.textContent = fmt(centsToDollars(wealthC));
+    elRound.textContent = String(roundNum);
+    if (outcomeText !== null) elOutcome.textContent = outcomeText;
+  }
+
+  // Marker colors/sizes: blue except last red & larger
+  function markerColors() {
+    const n = history.length;
+    const colors = new Array(n).fill('#1f77b4'); // blue
+    if (n > 0) colors[n-1] = '#d62728';          // red
+    return colors;
+  }
+  function markerSizes() {
+    const n = history.length;
+    const sizes = new Array(n).fill(6);
+    if (n > 0) sizes[n-1] = 10; // make current point bigger
+    return sizes;
+  }
+
+  // ---- Betting slider helpers ----
+  function updateBetSliderUI(from='init'){
+    const mode = currentMode();
+    if (mode === 'amount'){
+      betSlider.min = '0';
+      betSlider.max = String(centsToDollars(wealthC));
+      betSlider.step = '0.01'; // cents
+      betSliderMax.textContent = `max: ${fmt(centsToDollars(wealthC))}`;
+      betSliderLabel.textContent = fmt(parseFloat(betSlider.value||'0'));
+    } else {
+      betSlider.min = '0'; betSlider.max = '100';
+      betSlider.step = '0.1';
+      betSliderMax.textContent = 'max: 100%';
+      betSliderLabel.textContent = `${parseFloat(betSlider.value||'0').toFixed(1)}%`;
+    }
+    const maxVal = parseFloat(betSlider.max);
+    if (parseFloat(betSlider.value) > maxVal){
+      betSlider.value = String(maxVal);
+      syncBetFromSlider();
+    }
+    if (from !== 'slider') syncSliderFromBet();
+  }
+
+  function syncBetFromSlider(){
+    const mode = currentMode();
+    const v = parseFloat(betSlider.value || '0');
+    if (mode === 'amount'){
+      elBet.value = Number.isFinite(v) ? v.toFixed(2).replace(/\.00$/,'') : elBet.value;
+    } else {
+      elBet.value = Number.isFinite(v) ? `${v.toFixed(1)}%` : elBet.value;
+    }
+    updateHint();
+  }
+
+  function syncSliderFromBet(){
+    const raw = elBet.value.trim().toLowerCase();
+    const mode = currentMode();
+    if (mode === 'amount'){
+      let dollars;
+      if (raw.endsWith('%')){
+        const pct = parseFloat(raw.slice(0,-1));
+        if (!isNaN(pct)) dollars = centsToDollars(Math.min(wealthC, Math.max(0, Math.round(wealthC * (pct/100)))));
+      } else {
+        const num = parseFloat(raw);
+        if (!isNaN(num)) dollars = Math.min(centsToDollars(wealthC), Math.max(0, num));
+      }
+      if (typeof dollars === 'number'){
+        betSlider.value = String(dollars);
+        betSliderLabel.textContent = fmt(dollars);
+      }
+    } else {
+      let pct;
+      if (raw.endsWith('%')) {
+        const p = parseFloat(raw.slice(0,-1));
+        if (!isNaN(p)) pct = p;
+      } else {
+        const num = parseFloat(raw);
+        if (!isNaN(num)) pct = num; // interpret as % in percent mode
+      }
+      if (typeof pct === 'number'){
+        pct = Math.max(0, Math.min(pct, 100));
+        betSlider.value = String(pct);
+        betSliderLabel.textContent = `${pct.toFixed(1)}%`;
+      }
+    }
+  }
+
+  function updateHint(){
+    const { betC, error } = parseBet();
+    const raw = elBet.value.trim().toLowerCase();
+    if (error || betC == null){
+      elHint.textContent = (currentMode() === 'percent') ? 'Tip: enter a % like 5%' : '';
+    } else if (currentMode() === 'percent' || raw.endsWith('%')) {
+      elHint.textContent = `= ${fmt(centsToDollars(betC))} (of ${fmt(centsToDollars(wealthC))})`;
+    } else {
+      elHint.textContent = '';
+    }
+  }
+
+  // Clamp helper (UI) when user types over max
+  function clampBetToWealth(){
+    if (currentMode() === 'amount'){
+      const dollars = centsToDollars(wealthC);
+      elBet.value = dollars.toFixed(2).replace(/\.00$/,'');
+      betSlider.value = String(dollars);
+      betSliderLabel.textContent = fmt(dollars);
+      betSlider.max = String(dollars);
+    } else {
+      elBet.value = '100%';
+      betSlider.value = '100';
+      betSliderLabel.textContent = '100%';
+      betSlider.max = '100';
+    }
+    updateHint();
+  }
+
+  // Parse bet -> integer cents, errors: invalid/negative/toobig/quit
+  function parseBet(){
+    let raw = elBet.value.trim().toLowerCase();
+    if (raw === 'q' || raw === 'quit' || raw === 'exit') return { betC:null, error:'quit' };
+
+    const isPercentLiteral = raw.endsWith('%');
+    let betC = null;
+
+    try{
+      if (isPercentLiteral){
+        const pct = parseFloat(raw.slice(0,-1));
+        if (isNaN(pct)) throw new Error();
+        if (pct < 0) return { betC:null, error:'negative' };
+        betC = Math.round(wealthC * (pct/100));
+      } else {
+        if (currentMode() === 'percent'){
+          const pct = parseFloat(raw);
+          if (isNaN(pct)) throw new Error();
+          if (pct < 0) return { betC:null, error:'negative' };
+          betC = Math.round(wealthC * (pct/100));
+        } else {
+          const val = parseFloat(raw);
+          if (isNaN(val)) throw new Error();
+          betC = toCents(val);
+        }
+      }
+    } catch {
+      return { betC:null, error:'invalid' };
+    }
+    if (betC < 0) return { betC:null, error:'negative' };
+    // allow exactly full wealth; error only if strictly greater
+    if (betC > wealthC) return { betC:null, error:'toobig' };
+    return { betC, error:null };
+  }
+
+  function showWarnDialog(title, msg){
+    if (!warnDialog) { alert(`${title}\n\n${msg}`); return; }
+    warnTitle.textContent = title;
+    warnMsg.textContent = msg;
+    if (typeof warnDialog.showModal === 'function') warnDialog.showModal();
+    else warnDialog.setAttribute('open','');
+  }
+
+  // ------- Chart -------
+  const baseLayout = {
+    margin:{l:40,r:10,t:10,b:40},
+    paper_bgcolor:'rgba(0,0,0,0)',
+    plot_bgcolor:'rgba(0,0,0,0)',
+    xaxis:{ title:'Round', gridcolor:'rgba(255,255,255,.08)', zeroline:false },
+    yaxis:{ title:'Wealth ($)', gridcolor:'rgba(255,255,255,.08)', zeroline:false },
+    font:{ color:'#e8ecf3' }
+  };
+  const baseConfig = { displayModeBar:false, responsive:true };
+
+  function chartData(){
+    const rounds = history.map((_,i)=>i);
+    return [{
+      x: rounds,
+      y: history,
+      mode: 'lines+markers',
+      line: { width: 2, color: '#1f77b4' },
+      marker: { size: markerSizes(), color: markerColors() },
+      hovertemplate: 'Round %{x}<br>Wealth %{y:.2f}<extra></extra>'
+    }];
+  }
+
+  function initChart(){
+    Plotly.newPlot('chart', chartData(), baseLayout, baseConfig);
+  }
+  function updateChart(){
+    Plotly.react('chart', chartData(), baseLayout, baseConfig);
+  }
+  function drawFinalChart(){
+    const rounds = history.map((_,i)=>i);
+    Plotly.newPlot(finalChart, [{
+      x: rounds,
+      y: history,
+      mode:'lines+markers',
+      line:{width:2, color:'#1f77b4'},
+      marker:{size: markerSizes(), color: markerColors()},
+      hovertemplate:'Round %{x}<br>Wealth %{y:.2f}<extra></extra>'
+    }], baseLayout, baseConfig);
+  }
+
+  // ------- Game mechanics -------
+  function flipOnce(){
+    const { betC, error } = parseBet();
+    if (error === 'quit'){ quitGame(); return; }
+    if (error === 'invalid'){ updateStats('Invalid Input: Enter a valid number or percentage (e.g., 10 or 10%).'); stopAuto(); return; }
+    if (error === 'negative'){ updateStats('Invalid Bet: Bet cannot be negative.'); stopAuto(); return; }
+    if (error === 'toobig'){
+      clampBetToWealth(); // snap UI to the max
+      stopAuto();
+      showWarnDialog('Invalid Bet', 'Bet cannot exceed current wealth.');
+      return;
+    }
+    if (betC == null) return;
+
+    // Biased coin: Heads 60%, Tails 40%
+    const outcome = Math.random() < 0.60 ? 'H' : 'T';
+
+    roundNum += 1;
+    if (outcome==='H'){
+      wealthC += betC;
+      updateStats(`Round ${roundNum}: HEADS! You win ${fmt(centsToDollars(betC))}. Wealth ${fmt(centsToDollars(wealthC))}.`);
+    } else {
+      wealthC -= betC;
+      updateStats(`Round ${roundNum}: TAILS! You lose ${fmt(centsToDollars(betC))}. Wealth ${fmt(centsToDollars(wealthC))}.`);
+    }
+    history.push(centsToDollars(wealthC));
+    updateChart();
+    updateHint();
+
+    updateBetSliderUI();
+    if (wealthC <= 0){ endGame("You've hit $0. Game over."); }
+  }
+
+  function newGame(){
+    stopAuto();
+    wealthC = 10000;
+    history = [centsToDollars(wealthC)];
+    roundNum = 0;
+    // default bet is 0 (in either mode)
+    if (currentMode() === 'percent') elBet.value = '0%'; else elBet.value = '0';
+    updateStats('New game started! Enter a bet and click Flip.');
+    initChart();
+    updateHint();
+    betSlider.value = '0';
+    updateBetSliderUI();
+  }
+
+  function quitGame(){ endGame('You chose to end the game.'); }
+  function endGame(message){
+    stopAuto();
+    dlgTitle.textContent = message;
+    drawFinalChart();
+    if (typeof endDialog.showModal === 'function') endDialog.showModal();
+    else endDialog.setAttribute('open','');
+  }
+
+  function startAuto(){
+    const { error } = parseBet();
+    if (error){ flipOnce(); return; }
+    if (autoTimer) return;
+    autoBtn.disabled = true; stopBtn.disabled = false;
+    autoTimer = setInterval(flipOnce, autoDelayMs);
+  }
+  function stopAuto(){
+    if (autoTimer){ clearInterval(autoTimer); autoTimer = null; }
+    autoBtn.disabled = false; stopBtn.disabled = true;
+  }
+
+  // ------- Events -------
+  flipBtn.addEventListener('click', flipOnce);
+  newBtn.addEventListener('click', newGame);
+  quitBtn.addEventListener('click', quitGame);
+  autoBtn.addEventListener('click', startAuto);
+  stopBtn.addEventListener('click', stopAuto);
+
+  // Text input ↔ slider sync + clamp on overshoot while typing
+  elBet.addEventListener('input', () => {
+    updateHint();
+    syncSliderFromBet();
+    const { error } = parseBet();
+    if (error === 'toobig') clampBetToWealth(); // allow full-wealth, block > wealth
+  });
+
+  betSlider.addEventListener('input', () => { syncBetFromSlider(); updateBetSliderUI('slider'); });
+
+  // Mode toggle
+  modeRadios.forEach(r => r.addEventListener('change', () => {
+    const raw = elBet.value.trim();
+    if (r.value === 'percent' && r.checked){
+      if (raw && !raw.endsWith('%') && !isNaN(parseFloat(raw))) elBet.value = raw + '%';
+    } else if (r.value === 'amount' && r.checked){
+      if (raw.endsWith('%')){
+        const val = parseFloat(raw.slice(0,-1));
+        if (!isNaN(val)) elBet.value = String(val);
+      }
+    }
+    // After switching, clamp if needed
+    const { error } = parseBet();
+    if (error === 'toobig') clampBetToWealth();
+    updateHint();
+    // reconfigure slider for new mode to match current bet
+    if (r.value === 'percent' && r.checked){
+      const { betC, error:err2 } = parseBet();
+      const pct = (!err2 && betC!=null && wealthC>0) ? Math.min(100, Math.max(0, (betC/wealthC)*100)) : 0;
+      betSlider.value = String(pct);
+    } else if (r.value === 'amount' && r.checked){
+      const { betC, error:err3 } = parseBet();
+      const amt = (!err3 && betC!=null) ? Math.min(centsToDollars(wealthC), Math.max(0, centsToDollars(betC))) : 0;
+      betSlider.value = String(amt);
+    }
+    updateBetSliderUI();
+  }));
+
+  // Enter key to flip
+  elBet.addEventListener('keydown', (e)=>{ if (e.key === 'Enter') flipOnce(); });
+
+  // Speed slider
+  speed.addEventListener('input', () => {
+    autoDelayMs = Number(speed.value);
+    msLabel.textContent = String(autoDelayMs);
+    if (autoTimer){ stopAuto(); startAuto(); }
+  });
+
+  // Dialog buttons
+  playAgainBtn.addEventListener('click', () => {
+    if (endDialog.close) endDialog.close(); else endDialog.removeAttribute('open');
+    newGame();
+  });
+  closeBtn.addEventListener('click', () => {
+    if (endDialog.close) endDialog.close(); else endDialog.removeAttribute('open');
+  });
+  warnOkBtn.addEventListener('click', () => {
+    if (warnDialog.close) warnDialog.close(); else warnDialog.removeAttribute('open');
+  });
+
+  // ------- Init -------
+  updateStats();
+  initChart();
+  updateHint();
+  betSlider.value = '0';
+  updateBetSliderUI();
+})();
+</script>
+</body>
+</html>
