@@ -42,10 +42,11 @@
   .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
   /* Inputs & buttons */
-  input[type="text"]{
+  input[type="text"], textarea{
     background:#0b1122;color:var(--text);border:1px solid #263257;
     padding:12px 14px;border-radius:10px;outline:none;width:100%;font-size:16px; /* avoid iOS zoom */
   }
+  textarea{resize:vertical; min-height:72px; line-height:1.3}
   .hint{font-size:12px;color:var(--muted);margin-top:6px}
   .btn{
     background:#0b1122;border:1px solid #263257;color:var(--text);
@@ -113,11 +114,13 @@
           <label><input type="radio" name="mode" value="percent"> % of Wealth</label>
         </div>
       </div>
-
+      
       <!-- Bet Input + Slider -->
       <div class="card">
         <div class="group-title">Bet</div>
-        <div class="row"><input id="bet" type="text" value="0" inputmode="decimal" /></div>
+        <div class="row">
+          <textarea id="bet" rows="3" inputmode="decimal">0</textarea>
+        </div>
         <div class="range-row">
           <span class="label" id="betSliderLabel">$0.00</span>
           <input id="betSlider" type="range" min="0" max="100" step="0.01" value="0" />
@@ -247,6 +250,23 @@
     return sizes;
   }
 
+  // --- Textarea helpers: first line = bet input; last line = status ---
+  function getBetFirstLine() {
+    return (elBet.value || '').split('\n')[0] ?? '';
+  }
+  function getStatusLine() {
+    const parts = (elBet.value || '').split('\n');
+    return parts.slice(1).join('\n'); // everything after first line
+  }
+  function setBetFirstLine(text) {
+    const status = getStatusLine();
+    elBet.value = status ? `${text}\n${status}` : text;
+  }
+  function setStatusLine(text) {
+    const first = getBetFirstLine();
+    elBet.value = first ? `${first}\n${text}` : `\n${text}`;
+  }
+  
   // ---- Betting slider helpers ----
   function updateBetSliderUI(from='init'){
     const mode = currentMode();
@@ -274,15 +294,15 @@
     const mode = currentMode();
     const v = parseFloat(betSlider.value || '0');
     if (mode === 'amount'){
-      elBet.value = Number.isFinite(v) ? v.toFixed(2).replace(/\.00$/,'') : elBet.value;
+      if (Number.isFinite(v)) setBetFirstLine(v.toFixed(2).replace(/\.00$/,''));
     } else {
-      elBet.value = Number.isFinite(v) ? `${v.toFixed(1)}%` : elBet.value;
+      if (Number.isFinite(v)) setBetFirstLine(`${v.toFixed(1)}%`);
     }
     updateHint();
   }
 
   function syncSliderFromBet(){
-    const raw = elBet.value.trim().toLowerCase();
+    const raw = getBetFirstLine().trim().toLowerCase();
     const mode = currentMode();
     if (mode === 'amount'){
       let dollars;
@@ -316,7 +336,7 @@
 
   function updateHint(){
     const { betC, error } = parseBet();
-    const raw = elBet.value.trim().toLowerCase();
+    const raw = getBetFirstLine().trim().toLowerCase();
     if (error || betC == null){
       elHint.textContent = (currentMode() === 'percent') ? 'Tip: enter a % like 5%' : '';
     } else if (currentMode() === 'percent' || raw.endsWith('%')) {
@@ -330,12 +350,12 @@
   function clampBetToWealth(){
     if (currentMode() === 'amount'){
       const dollars = centsToDollars(wealthC);
-      elBet.value = dollars.toFixed(2).replace(/\.00$/,'');
+      setBetFirstLine(dollars.toFixed(2).replace(/\.00$/,''));
       betSlider.value = String(dollars);
       betSliderLabel.textContent = fmt(dollars);
       betSlider.max = String(dollars);
     } else {
-      elBet.value = '100%';
+      setBetFirstLine('100%');
       betSlider.value = '100';
       betSliderLabel.textContent = '100%';
       betSlider.max = '100';
@@ -345,7 +365,7 @@
 
   // Parse bet -> integer cents, errors: invalid/negative/toobig/quit
   function parseBet(){
-    let raw = elBet.value.trim().toLowerCase();
+    let raw = getBetFirstLine().trim().toLowerCase();
     if (raw === 'q' || raw === 'quit' || raw === 'exit') return { betC:null, error:'quit' };
 
     const isPercentLiteral = raw.endsWith('%');
@@ -452,6 +472,10 @@
       wealthC -= betC;
       updateStats(`Round ${roundNum}: TAILS! You lose ${fmt(centsToDollars(betC))}. Wealth ${fmt(centsToDollars(wealthC))}.`);
     }
+    const lastLine = outcome === 'H'
+      ? `Last: Round ${roundNum} — HEADS (+${fmt(centsToDollars(betC))}) → Wealth ${fmt(centsToDollars(wealthC))}`
+      : `Last: Round ${roundNum} — TAILS (−${fmt(centsToDollars(betC))}) → Wealth ${fmt(centsToDollars(wealthC))}`;
+    setStatusLine(lastLine);
     history.push(centsToDollars(wealthC));
     updateChart();
     updateHint();
@@ -466,12 +490,14 @@
     history = [centsToDollars(wealthC)];
     roundNum = 0;
     // default bet is 0 (in either mode)
-    if (currentMode() === 'percent') elBet.value = '0%'; else elBet.value = '0';
+    if (currentMode() === 'percent') setBetFirstLine('0%'); else setBetFirstLine('0');
+    setStatusLine('Last: —');
     updateStats('New game started! Enter a bet and click Flip.');
     initChart();
     updateHint();
     betSlider.value = '0';
     updateBetSliderUI();
+    setStatusLine('Last: —');
   }
 
   function quitGame(){ endGame('You chose to end the game.'); }
@@ -539,7 +565,7 @@
     } else if (r.value === 'amount' && r.checked){
       if (raw.endsWith('%')){
         const val = parseFloat(raw.slice(0,-1));
-        if (!isNaN(val)) elBet.value = String(val);
+        if (!isNaN(val)) setBetFirstLine(String(val));
       }
     }
     // After switching, clamp if needed
@@ -596,3 +622,4 @@
 </script>
 </body>
 </html>
+
