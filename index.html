@@ -409,11 +409,29 @@
     }];
   }
 
+  function yRangeForHistory() {
+  const min = Math.min(...history);
+  const max = Math.max(...history);
+  const span = Math.max(1e-6, max - min);
+  const pad  = Math.max(1, span * 0.08); // ≥ $1 padding
+  return [min - pad, max + pad];
+  }
+  
   function initChart(){
-    Plotly.newPlot('chart', chartData(), baseLayout, baseConfig);
+  const layout = {
+    ...baseLayout,
+    xaxis: { ...baseLayout.xaxis, autorange: true },
+    yaxis: { ...baseLayout.yaxis, range: yRangeForHistory() }
+  };
+  Plotly.newPlot('chart', chartData(), layout, baseConfig);
   }
   function updateChart(){
-    Plotly.react('chart', chartData(), baseLayout, baseConfig);
+  const layout = {
+    ...baseLayout,
+    xaxis: { ...baseLayout.xaxis, autorange: true },
+    yaxis: { ...baseLayout.yaxis, range: yRangeForHistory() }
+  };
+  Plotly.react('chart', chartData(), layout, baseConfig);
   }
   function drawFinalChart(){
     const rounds = history.map((_,i)=>i);
@@ -596,3 +614,4 @@
 </script>
 </body>
 </html>
+
