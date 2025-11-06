@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Three-Asset Portfolio Simulator</title>
+<style>
+  :root{
+    --bg:#0b1220;
+    --panel:#101a33;
+    --text:#e7ecf6;
+    --muted:#9fb0d8;
+    --wealth:#ffd700;  /* wealth line = yellow */
+    --bench:#9ca3af;   /* benchmark = gray */
+    --rf:#f4a259;      /* risk-free color (orange) */
+    --stk:#3b82f6;     /* stock color (blue) */
+    --bnd:#22c55e;     /* bond color (green) */
+    --danger:#ff6b6b;
+    --ok:#22c55e;
+  }
+  *{box-sizing:border-box}
+  html, body { width:100%; max-width:100%; }
+  body{
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    background: radial-gradient(1200px 800px at 20% -10%, #1a2650, var(--bg));
+    color:var(--text);
+    -webkit-text-size-adjust: 100%;
+  }
+  .container{max-width:1200px;margin:24px auto;padding:0 12px;}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+  h1{font-weight:800;letter-spacing:0.2px;margin:0;font-size:clamp(18px,4vw,28px)}
+  .pill{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:#0f1a35;border:1px solid rgba(255,255,255,0.08);color:var(--muted);font-size:13px}
+  .card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:16px;
+    padding:14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  }
+  .grid{display:grid;gap:12px;grid-template-columns: 1.15fr 1fr;min-width:0}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .stat{display:flex;flex-direction:column;align-items:flex-start;background:var(--panel);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px;min-width:180px}
+  .stat .label{color:var(--muted);font-size:12px}
+  .stat .value{font-weight:800;font-size:18px;margin-top:4px}
+  .slab{margin:8px 0 2px;color:var(--muted);font-size:12px}
+  input[type="range"]{width:100%;height:30px}
+  /* Distinct slider tracks and thumbs */
+  #wRisky::-webkit-slider-runnable-track{height:10px;border-radius:999px;background:linear-gradient(90deg,#facc15,#f59e0b)}
+  #wRisky::-moz-range-track{height:10px;border-radius:999px;background:linear-gradient(90deg,#facc15,#f59e0b)}
+  #wRisky::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#1e3a8a;border:2px solid #1e3a8a;margin-top:-8px}
+  #wRisky::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#1e3a8a;border:2px solid #1e3a8a}
+  #wStockWithinRisky::-webkit-slider-runnable-track{height:10px;border-radius:999px;background:linear-gradient(90deg,#22c55e,#16a34a)}
+  #wStockWithinRisky::-moz-range-track{height:10px;border-radius:999px;background:linear-gradient(90deg,#22c55e,#16a34a)}
+  #wStockWithinRisky::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#7c3aed;border:2px solid #7c3aed;margin-top:-8px}
+  #wStockWithinRisky::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#7c3aed;border:2px solid #7c3aed}
+  .weights{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px;min-width:0}
+  .weightBox{background:#0c1530;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px;min-width:0}
+  .weightBox .w{font-weight:700;font-size:16px;word-break:break-word}
+  .bar{height:12px;border-radius:999px;background:#0d1430;overflow:hidden;border:1px solid rgba(255,255,255,0.1);display:flex}
+  .seg{height:100%}
+  .seg.rf{background:var(--rf)}
+  .seg.stk{background:var(--stk)}
+  .seg.bnd{background:var(--bnd)}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  button{border:none;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;background:linear-gradient(180deg, #3c7be0, #2a63c2);color:white}
+  button.secondary{background:#202b4d}
+  button:disabled{opacity:0.6;cursor:not-allowed}
+  .status{display:flex;gap:10px;align-items:center;margin-top:8px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .run{background:var(--ok)}
+  .stop{background:var(--danger)}
+  .notice{margin-top:6px;color:#f6d58c;font-size:12px}
+  .callout{background:#0d1b3a;border:1px dashed rgba(255,255,255,0.2);padding:10px;border-radius:10px;margin-top:8px;font-size:12px}
+  .chartWrap{background:#0c1735;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:10px;margin-top:8px}
+  canvas.chart{display:block;width:100%;height:42vh;min-height:220px}
+  canvas.pie{display:block;width:100%;height:260px}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px;min-width:640px}
+  th, td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.08);text-align:right;white-space:nowrap}
+  th:first-child, td:first-child{text-align:left}
+  .tableWrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid rgba(255,255,255,0.08)}
+  .legend{display:flex;gap:16px;margin-top:6px;color:var(--muted);font-size:12px}
+  .legend .swatch{width:12px;height:12px;border-radius:2px;display:inline-block}
+  @media (max-width: 1100px){ .grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Portfolio Step Simulator — Risk-Free, Stock, Bond</h1>
+      <span class="pill">Start Wealth: <strong>$100</strong></span>
+    </header>
+
+    <div class="grid">
+      <!-- LEFT: Controls -->
+      <div class="card">
+        <div class="row">
+          <div class="stat"><div class="label">Risk-Free Rate</div><div class="value" id="rfInfo">5.00%</div></div>
+          <div class="stat"><div class="label">Stock ~ N(μ, σ)</div><div class="value" id="stockInfo">13.00%, 20.00%</div></div>
+          <div class="stat"><div class="label">Bond ~ N(μ, σ)</div><div class="value" id="bondInfo">8.00%, 12.00%</div></div>
+          <div class="stat"><div class="label">Corr(Stock, Bond)</div><div class="value" id="corrInfo">0.30</div></div>
+          <div class="stat"><div class="label">Termination Rule</div><div class="value" id="termInfo">Loss &gt; 5% OR Wealth &lt; RF benchmark</div></div>
+        </div>
+
+        <div class="slab">1) Split between Risk-Free and Risky (Stock+Bond)</div>
+        <input type="range" id="wRisky" min="0" max="100" step="1" value="0" />
+        <div class="weights">
+          <div class="weightBox"><div class="small">Risk-Free (1 − w<sub>risky</sub>)</div><div class="w"><span id="wRfPct">100.00%</span></div></div>
+          <div class="weightBox"><div class="small">Risky Total (w<sub>risky</sub>)</div><div class="w"><span id="wRiskyPct">0.00%</span></div></div>
+          <div class="weightBox"><div class="small">Current Wealth</div><div class="w">$<span id="wealthDisp">100.00</span> &nbsp;•&nbsp; Years: <span id="yearsDisp">0</span></div></div>
+        </div>
+
+        <div class="slab">2) Split within Risky between Stock and Bond</div>
+        <input type="range" id="wStockWithinRisky" min="0" max="100" step="1" value="0" />
+        <div class="weights">
+          <div class="weightBox"><div class="small">Stock Weight</div><div class="w"><span id="wStkPct">0.00%</span></div></div>
+          <div class="weightBox"><div class="small">Bond Weight</div><div class="w"><span id="wBndPct">0.00%</span></div></div>
+          <div class="weightBox">
+            <div class="small">Allocation Bar</div>
+            <div class="bar">
+              <div class="seg rf" id="barRf" style="width:100%"></div>
+              <div class="seg stk" id="barStk" style="width:0%"></div>
+              <div class="seg bnd" id="barBnd" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="btns">
+          <button id="btnStep">Simulate one stage</button>
+          <button id="btnAuto">Auto 10 stages</button>
+          <button class="secondary" id="btnReset">Reset</button>
+          <span class="pill">Stage: <strong id="stageDisp">0</strong></span>
+        </div>
+
+        <div class="status">
+          <div class="dot run" id="statusDot"></div>
+          <div class="small" id="statusText">Status: Running</div>
+        </div>
+        <div class="notice small" id="autoNotice"></div>
+
+        <div class="callout">
+          Each stage: draw correlated stock/bond returns and apply your weights (rebalance).<br/>
+          The game ends when the stage return is &lt; <strong>-5%</strong> or when <strong>Wealth &lt; RF-only benchmark</strong> (100% RF compounded since start).
+        </div>
+
+        <div class="chartWrap">
+          <div class="small" style="margin-bottom:6px">Wealth &amp; RF-only Benchmark</div>
+          <canvas id="chartWealth" class="chart"></canvas>
+          <div class="legend">
+            <span class="swatch" style="background:var(--wealth)"></span>&nbsp;Wealth
+            <span class="swatch" style="background:var(--bench);margin-left:16px"></span>&nbsp;RF-only Benchmark
+          </div>
+        </div>
+
+        <div class="chartWrap">
+          <div class="small" style="margin-bottom:6px">Allocation Pie (RF / Stock / Bond)</div>
+          <canvas id="pieAlloc" class="pie"></canvas>
+        </div>
+      </div>
+
+      <!-- RIGHT: Results -->
+      <div class="card">
+        <div class="row">
+          <div class="stat"><div class="label">Last Drawn Returns</div><div class="value" id="lastRet">–</div></div>
+          <div class="stat"><div class="label">New Wealth After Stage</div><div class="value" id="newWealth">–</div></div>
+          <div class="stat"><div class="label">Stage Return (portfolio)</div><div class="value" id="stageRetDisp">–</div></div>
+          <div class="stat"><div class="label">Benchmark Wealth (RF-only)</div><div class="value" id="benchWealthDisp">$100.00</div></div>
+        </div>
+
+        <div class="tableWrap">
+          <table id="logTbl">
+            <thead>
+              <tr>
+                <th>Stage</th>
+                <th>r<sub>RF</sub></th>
+                <th>r<sub>Stock</sub></th>
+                <th>r<sub>Bond</sub></th>
+                <th>w<sub>RF</sub></th>
+                <th>w<sub>Stock</sub></th>
+                <th>w<sub>Bond</sub></th>
+                <th>Portfolio r</th>
+                <th>Benchmark</th>
+                <th>Wealth</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const params = {
+  rf: 0.05,
+  muS: 0.13,
+  sigmaS: 0.20,
+  muB: 0.08,
+  sigmaB: 0.12,
+  rhoSB: 0.30,
+  startWealth: 100.0
+};
+
+let wealth = params.startWealth;
+let benchWealth = params.startWealth;
+let stage = 0;
+let wealthHistory = [wealth];
+let benchHistory = [benchWealth];
+let finished = false;
+
+function stdNormal() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+}
+
+function drawStockBondReturns() {
+  const covSS = params.sigmaS * params.sigmaS;
+  const covBB = params.sigmaB * params.sigmaB;
+  const covSB = params.rhoSB * params.sigmaS * params.sigmaB;
+  const a11 = Math.sqrt(covSS);
+  const a21 = covSB / a11;
+  const a22 = Math.sqrt(Math.max(1e-12, covBB - a21 * a21));
+  const z1 = stdNormal();
+  const z2 = stdNormal();
+  const epsS = a11 * z1;
+  const epsB = a21 * z1 + a22 * z2;
+  const rS = params.muS + epsS;
+  const rB = params.muB + epsB;
+  return { rS, rB };
+}
+
+function fmtPct(x){ return (x*100).toFixed(2) + "%"; }
+function fmtMoney(x){ return x.toFixed(2); }
+
+function updateAllocationBar(wRf, wStk, wBnd){
+  document.getElementById("barRf").style.width = (wRf*100).toFixed(0) + "%";
+  document.getElementById("barStk").style.width = (wStk*100).toFixed(0) + "%";
+  document.getElementById("barBnd").style.width = (wBnd*100).toFixed(0) + "%";
+}
+
+
+function updatePie(wRf, wStk, wBnd){
+  const c = document.getElementById("pieAlloc");
+  const ctx = c.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = c.clientWidth || 300;
+  const cssH = c.clientHeight || 300;
+  if (c.width !== Math.floor(cssW * dpr) || c.height !== Math.floor(cssH * dpr)){
+    c.width = Math.floor(cssW * dpr);
+    c.height = Math.floor(cssH * dpr);
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+  const cx = cssW/2, cy = cssH/2, r = Math.min(cssW, cssH)*0.35;
+  const styles = getComputedStyle(document.documentElement);
+  const parts = [
+    {w:wRf, color:(styles.getPropertyValue('--rf')||'#f4a259').trim(), label:'RF'},
+    {w:wStk, color:(styles.getPropertyValue('--stk')||'#3b82f6').trim(), label:'Stock'},
+    {w:wBnd, color:(styles.getPropertyValue('--bnd')||'#22c55e').trim(), label:'Bond'}
+  ];
+  let startAng = -Math.PI/2;
+  parts.forEach(p=>{
+    const angle = 2*Math.PI*(p.w||0);
+    if (angle <= 0) return;
+    // slice
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,startAng,startAng+angle,false);
+    ctx.closePath();
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    // on-slice label (colored to match slice, with dark halo)
+    const mid = startAng + angle/2;
+    const lr = r * 0.70;
+    const lx = cx + lr * Math.cos(mid);
+    const ly = cy + lr * Math.sin(mid);
+    ctx.font = "bold 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(0,0,0,0.45)";
+    ctx.strokeText(p.label, lx, ly);
+    ctx.fillStyle = p.color;
+    ctx.fillText(p.label, lx, ly);
+    startAng += angle;
+  });
+  // outline
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle="rgba(255,255,255,0.25)"; ctx.lineWidth=1; ctx.stroke();
+  // corner legend with matching colors
+  const legends = [
+    {text:`RF ${fmtPct(wRf)}`, color:(styles.getPropertyValue('--rf')||'#f4a259').trim()},
+    {text:`Stock ${fmtPct(wStk)}`, color:(styles.getPropertyValue('--stk')||'#3b82f6').trim()},
+    {text:`Bond ${fmtPct(wBnd)}`, color:(styles.getPropertyValue('--bnd')||'#22c55e').trim()},
+  ];
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  legends.forEach((lg,i)=>{
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillText(lg.text, 9, 19 + i*16);
+    ctx.fillStyle = lg.color;
+    ctx.fillText(lg.text, 8, 18 + i*16);
+  });
+}
+function updateWeightsUI() {
+  const wRisky = +document.getElementById("wRisky").value / 100;
+  const wStockInRisky = +document.getElementById("wStockWithinRisky").value / 100;
+  const wRf = 1 - wRisky;
+  const wStk = Math.max(0, wRisky * wStockInRisky);
+  const wBnd = Math.max(0, wRisky * (1 - wStockInRisky));
+
+  document.getElementById("wRfPct").textContent = fmtPct(wRf);
+  document.getElementById("wRiskyPct").textContent = fmtPct(wRisky);
+  document.getElementById("wStkPct").textContent = fmtPct(wStk);
+  document.getElementById("wBndPct").textContent = fmtPct(wBnd);
+
+  updateAllocationBar(wRf, wStk, wBnd);
+  updatePie(wRf, wStk, wBnd);
+  return { wRf, wStk, wBnd };
+}
+
+function appendRow({stage, rRf, rS, rB, wRf, wStk, wBnd, rP, benchWealth, wealth}){
+  const tr = document.createElement("tr");
+  const cells = [
+    stage, fmtPct(rRf), fmtPct(rS), fmtPct(rB),
+    fmtPct(wRf), fmtPct(wStk), fmtPct(wBnd),
+    fmtPct(rP), "$"+fmtMoney(benchWealth), "$"+fmtMoney(wealth)
+  ];
+  cells.forEach((c)=>{ const td=document.createElement("td"); td.textContent=c; tr.appendChild(td); });
+  document.querySelector("#logTbl tbody").appendChild(tr);
+}
+
+function drawChart(){
+  const c = document.getElementById("chartWealth");
+  if (!c) return;
+  const ctx = c.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = c.clientWidth || 360;
+  const cssH = c.clientHeight || 240;
+  if (c.width !== Math.floor(cssW * dpr) || c.height !== Math.floor(cssH * dpr)){
+    c.width = Math.floor(cssW * dpr);
+    c.height = Math.floor(cssH * dpr);
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  const pad = {l:46, r:18, t:14, b:26};
+  const W = cssW - pad.l - pad.r;
+  const H = cssH - pad.t - pad.b;
+
+  const n = wealthHistory.length;
+  const x = i => pad.l + (n<=1 ? 0 : (i/(n-1))*W);
+
+  const minV = Math.min(...wealthHistory, ...benchHistory, 0);
+  const maxV = Math.max(...wealthHistory, ...benchHistory, 120);
+  const y = v => pad.t + (1 - (v - minV) / (maxV - minV + 1e-9)) * H;
+
+  // Axes
+  ctx.strokeStyle = "rgba(255,255,255,0.25)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + H);
+  ctx.moveTo(pad.l, pad.t + H); ctx.lineTo(pad.l + W, pad.t + H);
+  ctx.stroke();
+
+  // Wealth (yellow) line + blue points
+  const css = getComputedStyle(document.documentElement);
+  ctx.strokeStyle = css.getPropertyValue('--wealth') || "#ffd700";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i=0;i<n;i++){ const xx=x(i), yy=y(wealthHistory[i]); if(i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
+  ctx.stroke();
+  ctx.fillStyle = '#1e90ff';
+  for (let i=0;i<n;i++){ const xx=x(i), yy=y(wealthHistory[i]); ctx.beginPath(); ctx.arc(xx,yy,2.5,0,Math.PI*2); ctx.fill(); }
+
+  // Benchmark (gray dashed) + dots
+  ctx.strokeStyle = css.getPropertyValue('--bench') || "#9ca3af";
+  ctx.setLineDash([6,4]);
+  ctx.beginPath();
+  for (let i=0;i<n;i++){ const xx=x(i), yy=y(benchHistory[i]); if(i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#cfd4dc';
+  for (let i=0;i<n;i++){ const xx=x(i), yy=y(benchHistory[i]); ctx.beginPath(); ctx.arc(xx,yy,2.5,0,Math.PI*2); ctx.fill(); }
+
+  // Y ticks
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  for (let i=0;i<=4;i++){ const v=minV + (i/4)*(maxV-minV); const yy=y(v); ctx.fillText("$"+v.toFixed(0), 6, yy+4); }
+
+  // Stage labels
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  if(n>0) ctx.fillText("0", x(0)-3, pad.t + H + 18);
+  if(n>1) ctx.fillText(String(n-1), x(n-1)-3, pad.t + H + 18);
+}
+
+function setStatus(){
+  const dot = document.getElementById("statusDot");
+  const txt = document.getElementById("statusText");
+  if (finished){ dot.classList.remove("run"); dot.classList.add("stop"); txt.textContent = "Status: Terminated at stage " + stage; }
+  else { dot.classList.remove("stop"); dot.classList.add("run"); txt.textContent = "Status: Running"; }
+}
+function setButtonsDisabled(isDisabled){ ["btnStep","btnAuto"].forEach(id => document.getElementById(id).disabled = isDisabled); }
+
+function simulateOne(){
+  if (finished) return;
+  const { wRf, wStk, wBnd } = updateWeightsUI();
+  const { rS, rB } = drawStockBondReturns();
+  const rRf = params.rf;
+
+  const rP = wRf * rRf + wStk * rS + wBnd * rB;
+
+  let nextWealth = wealth * (1 + rP);
+
+  stage += 1;
+  wealth = nextWealth;
+  wealthHistory.push(Math.max(0, wealth));
+
+  // Compound RF benchmark
+  benchWealth = benchWealth * (1 + rRf);
+  benchHistory.push(benchWealth);
+
+  drawChart();
+
+  document.getElementById("stageDisp").textContent = stage;
+  document.getElementById("wealthDisp").textContent = fmtMoney(Math.max(0, wealth));
+  document.getElementById("yearsDisp").textContent = String(stage);
+  document.getElementById("stageRetDisp").textContent = fmtPct(rP);
+  document.getElementById("lastRet").textContent = `r_RF=${fmtPct(rRf)}, r_Stock=${fmtPct(rS)}, r_Bond=${fmtPct(rB)}`;
+  document.getElementById("newWealth").textContent = "$" + fmtMoney(Math.max(0, wealth));
+  document.getElementById("benchWealthDisp").textContent = "$" + fmtMoney(benchWealth);
+
+  appendRow({stage, rRf, rS, rB, wRf, wStk, wBnd, rP, benchWealth, wealth: Math.max(0, wealth)});
+
+  // Termination rules
+  if (rP < -0.05){
+    finished = true; setButtonsDisabled(true); setStatus();
+    document.getElementById("autoNotice").textContent = "Stopped at stage " + stage + " (loss > 5% this stage)."; return;
+  }
+  if (wealth < benchWealth){
+    finished = true; setButtonsDisabled(true); setStatus();
+    document.getElementById("autoNotice").textContent = "Stopped at stage " + stage + " (wealth fell below RF-only benchmark)."; return;
+  }
+}
+
+function resetSim(){
+  wealth = params.startWealth;
+  benchWealth = params.startWealth;
+  stage = 0;
+  wealthHistory = [wealth];
+  benchHistory = [benchWealth];
+  finished = false;
+  setButtonsDisabled(false);
+  setStatus();
+  document.getElementById("autoNotice").textContent = "";
+  document.getElementById("stageDisp").textContent = stage;
+  document.getElementById("wealthDisp").textContent = fmtMoney(wealth);
+  document.getElementById("yearsDisp").textContent = "0";
+  document.getElementById("lastRet").textContent = "–";
+  document.getElementById("newWealth").textContent = "–";
+  document.getElementById("stageRetDisp").textContent = "–";
+  document.getElementById("benchWealthDisp").textContent = "$" + fmtMoney(benchWealth);
+  document.querySelector("#logTbl tbody").innerHTML = "";
+  // re-render visuals with current weights
+  const { wRf, wStk, wBnd } = updateWeightsUI();
+  updateAllocationBar(wRf, wStk, wBnd);
+  updatePie(wRf, wStk, wBnd);
+  drawChart();
+}
+
+document.getElementById("wRisky").addEventListener("input", ()=>{
+  const { wRf, wStk, wBnd } = updateWeightsUI();
+  updateAllocationBar(wRf, wStk, wBnd);
+  updatePie(wRf, wStk, wBnd);
+});
+document.getElementById("wStockWithinRisky").addEventListener("input", ()=>{
+  const { wRf, wStk, wBnd } = updateWeightsUI();
+  updateAllocationBar(wRf, wStk, wBnd);
+  updatePie(wRf, wStk, wBnd);
+});
+document.getElementById("btnStep").addEventListener("click", simulateOne);
+document.getElementById("btnAuto").addEventListener("click", async () => {
+  const btns = ["btnStep","btnAuto","btnReset"].map(id=>document.getElementById(id));
+  btns.forEach(b=>b.disabled=true);
+  document.getElementById("autoNotice").textContent = "";
+  for (let i=0;i<10;i++){
+    if (finished) break;
+    simulateOne();
+    if (finished) break;
+    await new Promise(r=>setTimeout(r, 150));
+  }
+  document.getElementById("btnReset").disabled = false;
+  if (!finished){
+    document.getElementById("btnStep").disabled = false;
+    document.getElementById("btnAuto").disabled = false;
+  }
+});
+document.getElementById("btnReset").addEventListener("click", resetSim);
+window.addEventListener("resize", ()=>{ drawChart(); const {wRf,wStk,wBnd}=updateWeightsUI(); updatePie(wRf,wStk,wBnd); });
+
+// init
+resetSim();
+</script>
+</body>
+</html>
