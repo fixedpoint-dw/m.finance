@@ -2,624 +2,1400 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="theme-color" content="#0f1320" />
-<title>Coin Flip Betting Game — Web</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0d1220" />
+<title>Coin Flip Betting Game — Enhanced</title>
 <link rel="icon" href="data:," />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
   :root{
-    --bg:#0f1320; --card:#151b2b; --text:#e8ecf3; --muted:#9ea8bd; --shadow:0 10px 30px rgba(0,0,0,.35);
-    --radius:18px;
+    --bg:#0b1020;
+    --bg2:#131c35;
+    --card:#131b31;
+    --card-2:#0f162c;
+    --line:#26365f;
+    --text:#ecf2ff;
+    --muted:#9aa8c6;
+    --good:#42d392;
+    --bad:#ff6b6b;
+    --gold-1:#ffe38a;
+    --gold-2:#f5b942;
+    --silver-1:#e3ebff;
+    --silver-2:#90a3d1;
+    --blue:#6aa6ff;
+    --radius:22px;
+    --shadow:0 18px 45px rgba(0,0,0,.35);
   }
+
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
     margin:0;
-    font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
-    background:linear-gradient(120deg,#0b0f1c 0%, #121a2f 60%, #0b0f1c 100%);
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     color:var(--text);
-    display:flex; align-items:center; justify-content:center;
-    padding:20px;
-    padding-left:calc(20px + env(safe-area-inset-left,0));
-    padding-right:calc(20px + env(safe-area-inset-right,0));
-    padding-top:calc(20px + env(safe-area-inset-top,0));
-    padding-bottom:calc(20px + env(safe-area-inset-bottom,0));
+    background:
+      radial-gradient(1100px 700px at 10% -10%, rgba(89,131,255,.22), transparent 55%),
+      radial-gradient(900px 600px at 100% 0%, rgba(255,203,92,.12), transparent 40%),
+      linear-gradient(135deg, #09101e 0%, #111831 52%, #0a1020 100%);
+    padding:22px;
+    padding-left:calc(22px + env(safe-area-inset-left,0));
+    padding-right:calc(22px + env(safe-area-inset-right,0));
+    padding-top:calc(22px + env(safe-area-inset-top,0));
+    padding-bottom:calc(22px + env(safe-area-inset-bottom,0));
   }
-  .app{width:min(1100px,100%);background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-  .header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:6px 6px 0}
-  .title{font-weight:800;letter-spacing:.3px;font-size:clamp(18px,2.2vw,22px);display:flex;align-items:center;gap:10px}
-  .pill{background:#1d2540;color:var(--muted);border-radius:999px;padding:6px 12px;font-size:12px;white-space:nowrap}
-  .stats{display:flex;gap:10px;flex-wrap:wrap}
-  .stat{background:#10162a;padding:10px 12px;border-radius:12px;min-width:140px;display:flex;flex-direction:column;gap:6px}
-  .stat .label{color:var(--muted);font-size:12px}
-  .stat .value{font-weight:700;font-size:18px}
 
-  /* FLUID GRID */
-  .controls{display:grid;grid-template-columns:repeat(auto-fit, minmax(240px,1fr));gap:12px;margin-top:14px}
-  .card{background:#0f1529;border:1px solid #1f2a48;border-radius:14px;padding:12px}
-  .group-title{color:var(--muted);font-size:12px;margin-bottom:8px;letter-spacing:.2px}
-  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-
-  /* Inputs & buttons */
-  input[type="text"], textarea{
-    background:#0b1122;color:var(--text);border:1px solid #263257;
-    padding:12px 14px;border-radius:10px;outline:none;width:100%;font-size:16px; /* avoid iOS zoom */
+  .app{
+    width:min(1180px,100%);
+    margin:0 auto;
+    background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:28px;
+    box-shadow:var(--shadow);
+    backdrop-filter: blur(8px);
+    overflow:hidden;
   }
-  textarea{resize:vertical; min-height:72px; line-height:1.3}
-  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+
+  .shell{padding:18px}
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    padding:4px 4px 16px;
+  }
+  .title-wrap{display:flex;flex-direction:column;gap:6px}
+  .title{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:900;
+    font-size:clamp(20px, 2.5vw, 28px);
+    letter-spacing:.2px;
+  }
+  .subrow{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:rgba(255,255,255,.06);
+    color:var(--muted);
+    font-size:12px;
+    border:1px solid rgba(255,255,255,.07);
+  }
+
+  .toggle-btn,.ghost-btn{
+    border:none;
+    background:rgba(255,255,255,.06);
+    color:var(--text);
+    padding:11px 14px;
+    border-radius:14px;
+    cursor:pointer;
+    font-weight:700;
+    min-height:44px;
+    transition:transform .15s ease, background .15s ease, opacity .15s ease;
+  }
+  .toggle-btn:hover,.ghost-btn:hover{transform:translateY(-1px); background:rgba(255,255,255,.1)}
+
+  .hero-grid{
+    display:grid;
+    grid-template-columns: minmax(340px, 1.08fr) minmax(300px, .92fr);
+    gap:16px;
+  }
+
+  .card{
+    background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:22px;
+    padding:16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:linear-gradient(180deg, rgba(255,255,255,.04), transparent 28%);
+    opacity:.7;
+  }
+
+  .bankroll-card{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    background:
+      radial-gradient(420px 220px at 85% -10%, rgba(106,166,255,.18), transparent 55%),
+      radial-gradient(360px 180px at 0% 100%, rgba(66,211,146,.1), transparent 55%),
+      linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
+  }
+  .bankroll-card .group-title{color:#c5d4fb}
+  .group-title{
+    font-size:12px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  .bankroll-value{
+    font-size:clamp(38px, 5vw, 60px);
+    font-weight:900;
+    letter-spacing:.02em;
+    line-height:.95;
+    text-shadow:0 8px 26px rgba(53,125,255,.24);
+  }
+  .bankroll-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .mini-stat{
+    min-width:120px;
+    padding:12px 14px;
+    border-radius:16px;
+    background:rgba(6,12,28,.45);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .mini-stat .label{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .mini-stat .value{font-size:18px;font-weight:800}
+
+  .outcome-banner{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    background:rgba(8,14,30,.52);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;
+    padding:14px;
+    line-height:1.35;
+    min-height:76px;
+  }
+  .outcome-dot{
+    width:14px;
+    height:14px;
+    border-radius:999px;
+    margin-top:4px;
+    flex:0 0 auto;
+    background:var(--blue);
+    box-shadow:0 0 0 5px rgba(106,166,255,.14);
+  }
+  .outcome-dot.win{background:var(--good); box-shadow:0 0 0 5px rgba(66,211,146,.14)}
+  .outcome-dot.loss{background:var(--bad); box-shadow:0 0 0 5px rgba(255,107,107,.14)}
+  .outcome-dot.waiting{background:#f5b942; box-shadow:0 0 0 5px rgba(245,185,66,.16)}
+
+  .coin-card{
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    background:
+      radial-gradient(420px 260px at 50% 0%, rgba(255,227,138,.08), transparent 45%),
+      linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
+  }
+  .coin-meta{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .coin-stage{
+    width:100%;
+    min-height:260px;
+    display:grid;
+    place-items:center;
+    position:relative;
+    perspective:1200px;
+  }
+  .coin-stage::before{
+    content:"";
+    position:absolute;
+    width:min(320px, 72%);
+    height:20px;
+    bottom:26px;
+    border-radius:999px;
+    background:radial-gradient(circle, rgba(0,0,0,.38), rgba(0,0,0,.02) 72%, transparent 76%);
+    filter:blur(6px);
+    transform:scaleX(1.05);
+  }
+  .coin-wrap{
+    position:relative;
+    width:170px;
+    height:170px;
+    display:grid;
+    place-items:center;
+  }
+  .coin-glow{
+    position:absolute;
+    inset:18px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,235,154,.32), rgba(255,235,154,0) 72%);
+    filter:blur(10px);
+    opacity:.75;
+    transition:opacity .2s ease;
+  }
+  .coin-wrap.flipping .coin-glow{opacity:1}
+  .coin{
+    position:relative;
+    width:150px;
+    height:150px;
+    transform-style:preserve-3d;
+    will-change:transform;
+  }
+  .coin-face{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+    border:5px solid rgba(255,255,255,.24);
+    box-shadow:
+      inset 0 3px 12px rgba(255,255,255,.25),
+      inset 0 -8px 16px rgba(0,0,0,.22),
+      0 20px 35px rgba(0,0,0,.28);
+    overflow:hidden;
+  }
+  .coin-face::before{
+    content:"";
+    position:absolute;
+    inset:10px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,.25);
+  }
+  .coin-face span{
+    font-size:54px;
+    font-weight:1000;
+    letter-spacing:.04em;
+    position:relative;
+    z-index:1;
+  }
+  .coin-face small{
+    position:relative;
+    z-index:1;
+    font-weight:800;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    opacity:.92;
+  }
+  .coin-face.front{
+    color:#2d1b00;
+    background:
+      radial-gradient(circle at 30% 26%, rgba(255,255,255,.75), rgba(255,255,255,0) 18%),
+      radial-gradient(circle at 70% 75%, rgba(90,50,0,.22), rgba(90,50,0,0) 30%),
+      linear-gradient(160deg, var(--gold-1), var(--gold-2));
+  }
+  .coin-face.back{
+    color:#12203b;
+    transform:rotateY(180deg);
+    background:
+      radial-gradient(circle at 30% 26%, rgba(255,255,255,.72), rgba(255,255,255,0) 18%),
+      radial-gradient(circle at 70% 75%, rgba(18,32,59,.18), rgba(18,32,59,0) 30%),
+      linear-gradient(160deg, var(--silver-1), var(--silver-2));
+  }
+  .coin-ring{
+    position:absolute;
+    width:164px;
+    height:164px;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 0 0 10px rgba(255,255,255,.02);
+    pointer-events:none;
+  }
+  .coin-result{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    text-align:center;
+    min-height:54px;
+  }
+  .coin-result strong{
+    font-size:22px;
+    letter-spacing:.08em;
+  }
+  .coin-result span{color:var(--muted);font-size:13px}
+
+  .controls-grid{
+    display:grid;
+    grid-template-columns:repeat(12, minmax(0,1fr));
+    gap:16px;
+    margin-top:16px;
+  }
+
+  .mode-card{grid-column:span 3}
+  .bet-card{grid-column:span 5}
+  .actions-card{grid-column:span 4}
+  .chart-card{grid-column:1/-1}
+
+  .segmented{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+  }
+  .segmented input{position:absolute;opacity:0;pointer-events:none}
+  .segmented label{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    min-height:52px;
+    border-radius:16px;
+    background:rgba(5,10,24,.55);
+    border:1px solid rgba(255,255,255,.08);
+    font-weight:800;
+    cursor:pointer;
+    transition:transform .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .segmented label:hover{transform:translateY(-1px)}
+  .segmented input:checked + span{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    min-height:52px;
+    padding:0 12px;
+    border-radius:16px;
+    border:1px solid rgba(121,178,255,.6);
+    background:linear-gradient(180deg, rgba(57,115,255,.26), rgba(57,115,255,.14));
+    box-shadow:0 10px 24px rgba(57,115,255,.16);
+  }
+
+  .bet-input-wrap{
+    position:relative;
+    margin-top:10px;
+  }
+  .bet-input-wrap.no-prefix .bet-prefix{opacity:0}
+  .bet-input-wrap.no-prefix .bet-input{padding-left:18px}
+  .bet-input{
+    width:100%;
+    min-height:60px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.1);
+    background:rgba(6,12,28,.58);
+    color:var(--text);
+    padding:18px 18px 18px 48px;
+    font-size:28px;
+    font-weight:850;
+    outline:none;
+    letter-spacing:.02em;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+  }
+  .bet-input:focus{border-color:rgba(121,178,255,.8); box-shadow:0 0 0 4px rgba(94,153,255,.12)}
+  .bet-prefix{
+    position:absolute;
+    left:16px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#7eaefc;
+    font-size:22px;
+    font-weight:900;
+    pointer-events:none;
+  }
+  .bet-help{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:10px;
+    color:var(--muted);
+    font-size:13px;
+  }
+  .bet-hint.error{color:#ffc3c3}
+  .bet-hint.ok{color:#b6ffd8}
+
+  .quick-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:12px;
+  }
+  .chip{
+    border:none;
+    cursor:pointer;
+    min-height:38px;
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(255,255,255,.06);
+    color:var(--text);
+    font-weight:800;
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .chip:hover{background:rgba(255,255,255,.1)}
+
+  .slider-block{margin-top:12px}
+  .slider-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .slider-row input[type="range"]{flex:1; min-width:170px}
+  .slider-label{
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+    min-width:88px;
+  }
+  .status-strip{
+    margin-top:14px;
+    padding:12px 14px;
+    border-radius:16px;
+    background:rgba(6,12,28,.45);
+    border:1px solid rgba(255,255,255,.07);
+    color:#d7e4ff;
+    min-height:48px;
+    line-height:1.35;
+  }
+
+  .actions-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:8px;
+  }
   .btn{
-    background:#0b1122;border:1px solid #263257;color:var(--text);
-    padding:12px 16px;border-radius:12px;cursor:pointer;transition:.15s ease;font-weight:700;min-height:44px;
+    border:none;
+    cursor:pointer;
+    min-height:46px;
+    padding:12px 16px;
+    border-radius:15px;
+    color:white;
+    font-weight:850;
+    letter-spacing:.01em;
+    transition:transform .15s ease, opacity .15s ease, filter .15s ease;
   }
-  .btn:hover{transform:translateY(-1px);border-color:#3451a3}
-  .btn.primary{background:linear-gradient(135deg,#2b6cb0,#4299e1);border:none}
-  .btn.success{background:linear-gradient(135deg,#2f855a,#48bb78);border:none}
-  .btn.warn{background:linear-gradient(135deg,#b7791f,#ed8936);border:none}
-  .btn.danger{background:linear-gradient(135deg,#9b2c2c,#f56565);border:none}
-  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .btn:hover{transform:translateY(-1px)}
+  .btn:disabled{opacity:.55; cursor:not-allowed; transform:none}
+  .btn.primary{background:linear-gradient(135deg,#3d79ff,#63b0ff)}
+  .btn.success{background:linear-gradient(135deg,#1ea672,#42d392)}
+  .btn.warn{background:linear-gradient(135deg,#f2ab3b,#ffc866); color:#2f2105}
+  .btn.danger{background:linear-gradient(135deg,#d64b6f,#ff7a7a)}
+  .btn.secondary{background:rgba(255,255,255,.08); color:var(--text); border:1px solid rgba(255,255,255,.1)}
 
-  .range-row{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
-  .range-row input[type="range"]{flex:1;min-width:160px}
-  .range-row .label{font-variant-numeric:tabular-nums;color:var(--muted)}
+  .speed-row{margin-top:16px}
+  .speed-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    color:var(--muted);
+    margin-bottom:8px;
+    font-size:13px;
+  }
 
-  /* Charts */
-  #chart{height:min(42vh, 380px)}
-  .footer{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;padding:8px 6px 0}
+  #chart{height:min(46vh, 420px)}
 
-  dialog{border:none;border-radius:16px;padding:0;max-width:min(720px,95vw);width:100%;background:#0f1529;color:var(--text);box-shadow:var(--shadow)}
-  .dlg-body{padding:16px}
-  .dlg-title{font-weight:800;font-size:18px;margin:6px 0 2px}
-  .dlg-sub{color:var(--muted);font-size:12px;margin-bottom:10px}
-  .dlg-actions{display:flex;gap:8px;justify-content:flex-end;padding:0 16px 16px}
+  .footer{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    color:var(--muted);
+    padding:14px 4px 4px;
+    font-size:12px;
+  }
 
-  @media (max-width:560px){.row .btn{flex:1}}
-  @media (max-width:420px){.row .btn{width:100%}}
-  @media (prefers-reduced-motion:reduce){.btn:hover{transform:none}}
+  dialog{
+    border:none;
+    border-radius:22px;
+    width:min(760px, 94vw);
+    background:linear-gradient(180deg, #0f1730, #0b1122);
+    color:var(--text);
+    padding:0;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  dialog::backdrop{background:rgba(2,5,14,.72); backdrop-filter:blur(4px)}
+  .dlg-body{padding:18px}
+  .dlg-title{font-size:24px;font-weight:900;margin:0 0 6px}
+  .dlg-sub{color:var(--muted);margin:0 0 14px;font-size:13px;line-height:1.4}
+  .dlg-actions{display:flex;justify-content:flex-end;gap:10px;padding:0 18px 18px}
+  #finalChart{height:min(40vh, 340px)}
 
-  /* --- COMPACT MODE --- */
-  body.compact .app{padding:10px}
-  body.compact .header{gap:6px;padding:4px 4px 0;align-items:flex-start}
-  body.compact .title{font-size:16px}
-  body.compact .title .pill{display:none}
-  body.compact .stats{width:100%;gap:6px}
-  body.compact .stat{flex:1;min-width:0;padding:8px 10px}
-  body.compact .stat .value{font-size:15px}
-  body.compact .controls{grid-template-columns:1fr}
-  body.compact .row .btn{width:100%}
-  body.compact .card{padding:10px}
-  body.compact .range-row{gap:8px}
-  body.compact #chart{height:min(58vh,420px)}
-  @media(max-width:480px){body.compact .footer{flex-direction:column;align-items:flex-start}}
+  body.compact .shell{padding:10px}
+  body.compact .topbar{padding-bottom:10px}
+  body.compact .hero-grid{grid-template-columns:1fr; gap:12px}
+  body.compact .controls-grid{gap:12px}
+  body.compact .card{padding:12px}
+  body.compact .bankroll-value{font-size:34px}
+  body.compact .coin-stage{min-height:210px}
+  body.compact .coin-wrap{width:136px;height:136px}
+  body.compact .coin{width:124px;height:124px}
+  body.compact .coin-ring{width:138px;height:138px}
+  body.compact .coin-face span{font-size:42px}
+  body.compact .coin-stage::before{bottom:18px}
+
+  @media (max-width: 980px){
+    .hero-grid{grid-template-columns:1fr}
+    .mode-card{grid-column:span 4}
+    .bet-card{grid-column:span 8}
+    .actions-card{grid-column:1/-1}
+  }
+  @media (max-width: 760px){
+    .controls-grid{grid-template-columns:1fr}
+    .mode-card,.bet-card,.actions-card,.chart-card{grid-column:auto}
+  }
+  @media (max-width: 560px){
+    body{padding:12px; padding-left:calc(12px + env(safe-area-inset-left,0)); padding-right:calc(12px + env(safe-area-inset-right,0)); padding-top:calc(12px + env(safe-area-inset-top,0)); padding-bottom:calc(12px + env(safe-area-inset-bottom,0));}
+    .topbar{padding-bottom:10px}
+    .bet-input{font-size:24px; min-height:56px}
+    .actions-row .btn{flex:1 1 calc(50% - 8px)}
+    .mini-stat{flex:1 1 120px}
+    .bankroll-row{display:grid;grid-template-columns:repeat(2, minmax(0,1fr))}
+    .coin-stage{min-height:220px}
+    #chart{height:min(42vh, 320px)}
+  }
+  @media (max-width: 410px){
+    .actions-row .btn{flex:1 1 100%}
+    .bankroll-row{grid-template-columns:1fr}
+    .subrow{gap:6px}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{scroll-behavior:auto}
+    .btn:hover,.toggle-btn:hover,.ghost-btn:hover,.segmented label:hover{transform:none}
+  }
 </style>
 </head>
 <body>
   <div class="app">
-    <div class="header">
-      <div class="title">🪙 Coin Flip Betting <span class="pill">Biased coin • Heads 60% / Tails 40%</span></div>
-      <div class="stats">
-        <div class="stat"><div class="label">Wealth</div><div class="value" id="wealth">$100.00</div></div>
-        <div class="stat"><div class="label">Round</div><div class="value" id="round">0</div></div>
-        <div class="stat"><div class="label">Outcome</div><div class="value" id="outcome">Welcome! Enter a bet and click Flip.</div></div>
-      </div>
-      <button class="btn" id="compactBtn" aria-pressed="false">Compact: Off</button>
-    </div>
-
-    <div class="controls">
-      <!-- Bet Mode -->
-      <div class="card">
-        <div class="group-title">Bet Mode</div>
-        <div class="row">
-          <label><input type="radio" name="mode" value="amount" checked> $ Amount</label>
-          <label><input type="radio" name="mode" value="percent"> % of Wealth</label>
+    <div class="shell">
+      <div class="topbar">
+        <div class="title-wrap">
+          <div class="title">🪙 Coin Flip Betting Game</div>
+          <div class="subrow">
+            <span class="pill">Biased coin: Heads 60% • Tails 40%</span>
+            <span class="pill">Type <b>10%</b> in either mode</span>
+            <span class="pill">Keywords: <b>all</b>, <b>max</b>, <b>quit</b></span>
+          </div>
         </div>
-      </div>
-      
-      <!-- Bet Input + Slider -->
-      <div class="card">
-        <div class="group-title">Bet</div>
-        <div class="row">
-          <textarea id="bet" rows="3" inputmode="decimal">0</textarea>
-        </div>
-        <div class="range-row">
-          <span class="label" id="betSliderLabel">$0.00</span>
-          <input id="betSlider" type="range" min="0" max="100" step="0.01" value="0" />
-          <span class="label" id="betSliderMax">max: $100.00</span>
-        </div>
-        <div class="hint" id="hint"></div>
+        <button class="toggle-btn" id="compactBtn" aria-pressed="false">Compact: Off</button>
       </div>
 
-      <!-- Actions + Speed -->
-      <div class="card">
-        <div class="group-title">Actions</div>
-        <div class="row" style="gap:10px;">
-          <button class="btn primary" id="flipBtn">Flip</button>
-          <button class="btn success" id="autoBtn">Auto Play</button>
-          <button class="btn warn" id="stopBtn" disabled>Stop Auto</button>
-          <button class="btn" id="newBtn">New Game</button>
-          <button class="btn danger" id="quitBtn">Quit</button>
-        </div>
-        <div class="range-row">
-          <span>Speed</span>
-          <input id="speed" type="range" min="100" max="1500" step="50" value="700" />
-          <span class="label"><span id="msLabel">700</span> ms / flip</span>
-        </div>
-      </div>
+      <section class="hero-grid">
+        <div class="card bankroll-card">
+          <div>
+            <div class="group-title">Current Wealth</div>
+            <div class="bankroll-value" id="wealth">$100.00</div>
+          </div>
 
-      <!-- Chart -->
-      <div class="card" style="grid-column:1/-1">
-        <div class="group-title">Wealth Over Time</div>
-        <div id="chart"></div>
-      </div>
-    </div>
+          <div class="bankroll-row">
+            <div class="mini-stat">
+              <div class="label">Round</div>
+              <div class="value" id="round">0</div>
+            </div>
+            <div class="mini-stat">
+              <div class="label">Bet Mode</div>
+              <div class="value" id="modeValue">$ Amount</div>
+            </div>
+            <div class="mini-stat">
+              <div class="label">Last Result</div>
+              <div class="value" id="lastBadge">—</div>
+            </div>
+          </div>
 
-    <div class="footer">
-      <div>Tip: You can type <b>10%</b> directly in the Bet box (works in either mode).</div>
-      <div>Made for desktop & mobile • No data leaves your device</div>
+          <div class="outcome-banner" id="outcomeBanner" aria-live="polite">
+            <div class="outcome-dot" id="outcomeDot"></div>
+            <div id="outcomeText">Welcome! Enter a bet and press Flip.</div>
+          </div>
+        </div>
+
+        <div class="card coin-card">
+          <div class="coin-meta">
+            <div>
+              <div class="group-title">Coin Toss</div>
+              <div style="color:var(--muted); font-size:13px; margin-top:4px;">A short animation plays every round so the game feels like a real toss.</div>
+            </div>
+            <span class="pill" id="biasPill">Heads favored</span>
+          </div>
+
+          <div class="coin-stage">
+            <div class="coin-wrap" id="coinWrap">
+              <div class="coin-glow"></div>
+              <div class="coin-ring"></div>
+              <div class="coin" id="coin" data-face="H" aria-label="coin showing heads">
+                <div class="coin-face front">
+                  <span>H</span>
+                  <small>Heads</small>
+                </div>
+                <div class="coin-face back">
+                  <span>T</span>
+                  <small>Tails</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="coin-result" aria-live="polite">
+            <strong id="coinResultTitle">READY</strong>
+            <span id="coinResultSub">Tap Flip to toss the coin.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls-grid">
+        <div class="card mode-card">
+          <div class="group-title">Bet Mode</div>
+          <div class="segmented" style="margin-top:10px;">
+            <label>
+              <input type="radio" name="mode" value="amount" checked>
+              <span>$ Amount</span>
+            </label>
+            <label>
+              <input type="radio" name="mode" value="percent">
+              <span>% of Wealth</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="card bet-card">
+          <div class="group-title">Bet</div>
+          <div class="bet-input-wrap" id="betInputWrap">
+            <span class="bet-prefix" id="betPrefix">$</span>
+            <input id="betInput" class="bet-input" type="text" inputmode="decimal" enterkeyhint="go" autocomplete="off" spellcheck="false" value="0" aria-label="Bet amount or percentage" />
+          </div>
+          <div class="bet-help">
+            <div class="bet-hint" id="betHint">Enter a dollar amount, a percentage, or “all”.</div>
+            <div id="betMaxLabel">Max: $100.00</div>
+          </div>
+
+          <div class="quick-row">
+            <button class="chip" data-quick="10">10%</button>
+            <button class="chip" data-quick="25">25%</button>
+            <button class="chip" data-quick="50">50%</button>
+            <button class="chip" data-quick="75">75%</button>
+            <button class="chip" data-quick="100">Max</button>
+          </div>
+
+          <div class="slider-block">
+            <div class="slider-row">
+              <span class="slider-label" id="betSliderLabel">$0.00</span>
+              <input id="betSlider" type="range" min="0" max="100" step="0.01" value="0" />
+              <span class="slider-label" id="betSliderCap">max $100.00</span>
+            </div>
+          </div>
+
+          <div class="status-strip" id="lastRound">Last: —</div>
+        </div>
+
+        <div class="card actions-card">
+          <div class="group-title">Actions</div>
+          <div class="actions-row" style="margin-top:10px;">
+            <button class="btn primary" id="flipBtn">Flip</button>
+            <button class="btn success" id="autoBtn">Auto Play</button>
+            <button class="btn warn" id="stopBtn" disabled>Stop Auto</button>
+            <button class="btn secondary" id="newBtn">New Game</button>
+            <button class="btn danger" id="quitBtn">Quit</button>
+          </div>
+
+          <div class="speed-row">
+            <div class="speed-head">
+              <span>Auto speed</span>
+              <span><span id="msLabel">700</span> ms per round target</span>
+            </div>
+            <input id="speed" type="range" min="200" max="1800" step="50" value="700" style="width:100%;" />
+          </div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="group-title">Wealth Over Time</div>
+          <div id="chart"></div>
+        </div>
+      </section>
+
+      <div class="footer">
+        <div>Cleaner input, animated coin toss, more visible bankroll, and exact-money parsing so “bet it all” works reliably.</div>
+        <div>Mobile friendly • Same game rules • All calculations stay in your browser</div>
+      </div>
     </div>
   </div>
 
-  <!-- End Game Dialog -->
   <dialog id="endDialog">
     <div class="dlg-body">
-      <div class="dlg-title" id="dlgTitle">Game Over</div>
-      <div class="dlg-sub" id="dlgSub">Wealth history from the beginning:</div>
-      <div id="finalChart" style="height:min(38vh,320px)"></div>
+      <h2 class="dlg-title" id="dlgTitle">Game Over</h2>
+      <p class="dlg-sub" id="dlgSub">Here is your full wealth history from the beginning of the game.</p>
+      <div id="finalChart"></div>
     </div>
     <div class="dlg-actions">
-      <button class="btn" id="playAgainBtn">Play Again</button>
+      <button class="btn secondary" id="playAgainBtn">Play Again</button>
       <button class="btn danger" id="closeBtn">Close</button>
     </div>
   </dialog>
 
-  <!-- Warning Dialog -->
   <dialog id="warnDialog">
     <div class="dlg-body">
-      <div class="dlg-title" id="warnTitle">Invalid Bet</div>
-      <div class="dlg-sub" id="warnMsg">You cannot bet more than your current wealth.</div>
+      <h2 class="dlg-title" id="warnTitle">Invalid Bet</h2>
+      <p class="dlg-sub" id="warnMsg">You cannot bet more than your current wealth.</p>
     </div>
-    <div class="dlg-actions"><button class="btn" id="warnOkBtn">OK</button></div>
+    <div class="dlg-actions">
+      <button class="btn secondary" id="warnOkBtn">OK</button>
+    </div>
   </dialog>
 
 <script>
 (() => {
-  // ------- Money as integer cents for exactness -------
-  const toCents = (x) => Math.round((+x) * 100);
-  const centsToDollars = (c) => c / 100;
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // ------- State (in cents) -------
-  let wealthC = 10000;         // $100.00
-  let history = [centsToDollars(wealthC)]; // store dollars for chart
-  let roundNum = 0;
-  let autoTimer = null;
-  let autoDelayMs = 700;
+  const state = {
+    wealthC: 10000,
+    history: [100],
+    round: 0,
+    autoActive: false,
+    autoTimer: null,
+    autoDelayMs: 700,
+    isFlipping: false,
+    lastOutcome: null,
+    currentFace: 'H'
+  };
 
-  // ------- DOM -------
-  const elWealth = document.getElementById('wealth');
-  const elRound  = document.getElementById('round');
-  const elOutcome= document.getElementById('outcome');
-  const elBet    = document.getElementById('bet');
-  const elHint   = document.getElementById('hint');
-  const flipBtn  = document.getElementById('flipBtn');
-  const autoBtn  = document.getElementById('autoBtn');
-  const stopBtn  = document.getElementById('stopBtn');
-  const newBtn   = document.getElementById('newBtn');
-  const quitBtn  = document.getElementById('quitBtn');
-  const speed    = document.getElementById('speed');
-  const msLabel  = document.getElementById('msLabel');
-  const endDialog= document.getElementById('endDialog');
-  const dlgTitle = document.getElementById('dlgTitle');
-  const finalChart = document.getElementById('finalChart');
-
-  const warnDialog = document.getElementById('warnDialog');
-  const warnTitle  = document.getElementById('warnTitle');
-  const warnMsg    = document.getElementById('warnMsg');
-  const warnOkBtn  = document.getElementById('warnOkBtn');
-
-  const betSlider      = document.getElementById('betSlider');
-  const betSliderLabel = document.getElementById('betSliderLabel');
-  const betSliderMax   = document.getElementById('betSliderMax');
-
-  const playAgainBtn = document.getElementById('playAgainBtn');
-  const closeBtn = document.getElementById('closeBtn');
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    wealth: $('wealth'),
+    round: $('round'),
+    modeValue: $('modeValue'),
+    lastBadge: $('lastBadge'),
+    outcomeText: $('outcomeText'),
+    outcomeDot: $('outcomeDot'),
+    betInputWrap: $('betInputWrap'),
+    betInput: $('betInput'),
+    betPrefix: $('betPrefix'),
+    betHint: $('betHint'),
+    betMaxLabel: $('betMaxLabel'),
+    lastRound: $('lastRound'),
+    betSlider: $('betSlider'),
+    betSliderLabel: $('betSliderLabel'),
+    betSliderCap: $('betSliderCap'),
+    flipBtn: $('flipBtn'),
+    autoBtn: $('autoBtn'),
+    stopBtn: $('stopBtn'),
+    newBtn: $('newBtn'),
+    quitBtn: $('quitBtn'),
+    speed: $('speed'),
+    msLabel: $('msLabel'),
+    compactBtn: $('compactBtn'),
+    coin: $('coin'),
+    coinWrap: $('coinWrap'),
+    coinResultTitle: $('coinResultTitle'),
+    coinResultSub: $('coinResultSub'),
+    endDialog: $('endDialog'),
+    dlgTitle: $('dlgTitle'),
+    dlgSub: $('dlgSub'),
+    finalChart: $('finalChart'),
+    warnDialog: $('warnDialog'),
+    warnTitle: $('warnTitle'),
+    warnMsg: $('warnMsg'),
+    warnOkBtn: $('warnOkBtn'),
+    playAgainBtn: $('playAgainBtn'),
+    closeBtn: $('closeBtn')
+  };
 
   const modeRadios = [...document.querySelectorAll('input[name="mode"]')];
-  const compactBtn = document.getElementById('compactBtn');
+  const quickButtons = [...document.querySelectorAll('.chip[data-quick]')];
 
-  // ------- Utils -------
   const fmt = (dollars) => `$${dollars.toFixed(2)}`;
-  const currentMode = () => (modeRadios.find(r => r.checked)?.value || 'amount');
+  const fmtCents = (cents) => fmt(cents / 100);
+  const currentMode = () => modeRadios.find(r => r.checked)?.value || 'amount';
+  const COIN_ANIMATION_MS = prefersReducedMotion ? 280 : 780;
 
-  function updateStats(outcomeText=null){
-    elWealth.textContent = fmt(centsToDollars(wealthC));
-    elRound.textContent = String(roundNum);
-    if (outcomeText !== null) elOutcome.textContent = outcomeText;
-  }
-
-  // Marker colors/sizes: blue except last red & larger
-  function markerColors() {
-    const n = history.length;
-    const colors = new Array(n).fill('#1f77b4'); // blue
-    if (n > 0) colors[n-1] = '#d62728';          // red
-    return colors;
-  }
-  function markerSizes() {
-    const n = history.length;
-    const sizes = new Array(n).fill(6);
-    if (n > 0) sizes[n-1] = 10; // make current point bigger
-    return sizes;
+  function cleanNumericText(raw) {
+    return String(raw || '').trim().replace(/,/g, '').replace(/\s+/g, '').replace(/^\$/,'');
   }
 
-  // --- Textarea helpers: first line = bet input; last line = status ---
-  function getBetFirstLine() {
-    return (elBet.value || '').split('\n')[0] ?? '';
+  function parseMoneyToCents(raw) {
+    const text = cleanNumericText(raw);
+    if (text === '' || text === '.' || text === '-' || text === '-.') return null;
+    if (!/^-?\d*(?:\.\d{0,2})?$/.test(text)) return null;
+    const sign = text.startsWith('-') ? -1 : 1;
+    const unsigned = sign < 0 ? text.slice(1) : text;
+    const [whole = '0', frac = ''] = unsigned.split('.');
+    if (whole === '' && frac === '') return null;
+    const cents = (Number(whole || '0') * 100 + Number((frac + '00').slice(0, 2))) * sign;
+    return Number.isFinite(cents) ? cents : null;
   }
-  function getStatusLine() {
-    const parts = (elBet.value || '').split('\n');
-    return parts.slice(1).join('\n'); // everything after first line
+
+  function parsePercent(raw) {
+    const text = cleanNumericText(raw).replace(/%$/,'').trim();
+    if (text === '' || text === '.') return null;
+    const pct = Number(text);
+    return Number.isFinite(pct) ? pct : null;
   }
-  function setBetFirstLine(text) {
-    const status = getStatusLine();
-    elBet.value = status ? `${text}\n${status}` : text;
+
+  function parseBet() {
+    const raw = el.betInput.value.trim();
+    const lower = raw.toLowerCase();
+
+    if (lower === 'q' || lower === 'quit' || lower === 'exit') {
+      return { betC: null, error: 'quit' };
+    }
+    if (lower === 'all' || lower === 'max') {
+      return { betC: state.wealthC, error: null };
+    }
+
+    const isPercentLiteral = /%\s*$/.test(raw);
+
+    if (isPercentLiteral || currentMode() === 'percent') {
+      const pct = parsePercent(raw);
+      if (pct == null) return { betC: null, error: 'invalid' };
+      if (pct < 0) return { betC: null, error: 'negative' };
+      if (pct > 100) return { betC: null, error: 'toobig' };
+      const betC = Math.round(state.wealthC * (pct / 100));
+      return { betC, error: null };
+    }
+
+    const moneyC = parseMoneyToCents(raw);
+    if (moneyC == null) return { betC: null, error: 'invalid' };
+    if (moneyC < 0) return { betC: null, error: 'negative' };
+    if (moneyC > state.wealthC) return { betC: null, error: 'toobig' };
+    return { betC: moneyC, error: null };
   }
-  function setStatusLine(text) {
-    const first = getBetFirstLine();
-    elBet.value = first ? `${first}\n${text}` : `\n${text}`;
+
+  function setBetInputForMode(rawValue) {
+    el.betInput.value = rawValue;
+    syncSliderFromInput();
+    updateBetHint();
   }
-  
-  // ---- Betting slider helpers ----
-  function updateBetSliderUI(from='init'){
+
+  function setBetToMax() {
+    if (currentMode() === 'percent') {
+      el.betInput.value = '100%';
+    } else {
+      el.betInput.value = (state.wealthC / 100).toFixed(2).replace(/\.00$/, '');
+    }
+    syncSliderFromInput();
+    updateBetHint();
+  }
+
+  function setQuickPercent(pct) {
+    if (pct >= 100) {
+      setBetToMax();
+      return;
+    }
+    if (currentMode() === 'percent') {
+      el.betInput.value = `${pct}%`;
+    } else {
+      const cents = Math.round(state.wealthC * (pct / 100));
+      el.betInput.value = (cents / 100).toFixed(2).replace(/\.00$/, '');
+    }
+    syncSliderFromInput();
+    updateBetHint();
+  }
+
+  function showWarnDialog(title, msg) {
+    el.warnTitle.textContent = title;
+    el.warnMsg.textContent = msg;
+    if (typeof el.warnDialog.showModal === 'function') el.warnDialog.showModal();
+    else el.warnDialog.setAttribute('open','');
+  }
+
+  function updateOutcome(text, tone = 'neutral') {
+    el.outcomeText.textContent = text;
+    el.outcomeDot.className = 'outcome-dot';
+    if (tone === 'win') el.outcomeDot.classList.add('win');
+    else if (tone === 'loss') el.outcomeDot.classList.add('loss');
+    else if (tone === 'waiting') el.outcomeDot.classList.add('waiting');
+  }
+
+  function updateModeUI() {
     const mode = currentMode();
-    if (mode === 'amount'){
-      betSlider.min = '0';
-      betSlider.max = String(centsToDollars(wealthC));
-      betSlider.step = '0.01'; // cents
-      betSliderMax.textContent = `max: ${fmt(centsToDollars(wealthC))}`;
-      betSliderLabel.textContent = fmt(parseFloat(betSlider.value||'0'));
-    } else {
-      betSlider.min = '0'; betSlider.max = '100';
-      betSlider.step = '0.1';
-      betSliderMax.textContent = 'max: 100%';
-      betSliderLabel.textContent = `${parseFloat(betSlider.value||'0').toFixed(1)}%`;
-    }
-    const maxVal = parseFloat(betSlider.max);
-    if (parseFloat(betSlider.value) > maxVal){
-      betSlider.value = String(maxVal);
-      syncBetFromSlider();
-    }
-    if (from !== 'slider') syncSliderFromBet();
+    el.modeValue.textContent = mode === 'percent' ? '% of Wealth' : '$ Amount';
+    el.betPrefix.textContent = mode === 'percent' ? '' : '$';
+    el.betInputWrap.classList.toggle('no-prefix', mode === 'percent');
+    el.betInput.placeholder = mode === 'percent' ? '10 or 10%' : '10.00 or 10%';
   }
 
-  function syncBetFromSlider(){
+  function updateBetHint() {
+    const parsed = parseBet();
+    const raw = el.betInput.value.trim().toLowerCase();
     const mode = currentMode();
-    const v = parseFloat(betSlider.value || '0');
-    if (mode === 'amount'){
-      if (Number.isFinite(v)) setBetFirstLine(v.toFixed(2).replace(/\.00$/,''));
-    } else {
-      if (Number.isFinite(v)) setBetFirstLine(`${v.toFixed(1)}%`);
+
+    el.betMaxLabel.textContent = `Max: ${fmtCents(state.wealthC)}`;
+
+    if (parsed.error === 'invalid') {
+      el.betHint.textContent = mode === 'percent'
+        ? 'Enter a percent like 5 or 5%, or type all.'
+        : 'Enter dollars like 10.50, a percent like 10%, or type all.';
+      el.betHint.className = 'bet-hint';
+      return;
     }
-    updateHint();
+
+    if (parsed.error === 'negative') {
+      el.betHint.textContent = 'Bet cannot be negative.';
+      el.betHint.className = 'bet-hint error';
+      return;
+    }
+
+    if (parsed.error === 'toobig') {
+      el.betHint.textContent = `That is above your bankroll of ${fmtCents(state.wealthC)}.`;
+      el.betHint.className = 'bet-hint error';
+      return;
+    }
+
+    if (parsed.betC == null) {
+      el.betHint.textContent = 'Enter a dollar amount, a percentage, or “all”.';
+      el.betHint.className = 'bet-hint';
+      return;
+    }
+
+    const isPercentLike = raw.endsWith('%') || raw === 'all' || raw === 'max' || mode === 'percent';
+    el.betHint.textContent = isPercentLike
+      ? `You are risking ${fmtCents(parsed.betC)} out of ${fmtCents(state.wealthC)}.`
+      : `Risking ${fmtCents(parsed.betC)} this round.`;
+    el.betHint.className = 'bet-hint ok';
   }
 
-  function syncSliderFromBet(){
-    const raw = getBetFirstLine().trim().toLowerCase();
+  function updateBetSliderUI(syncFromInput = true) {
     const mode = currentMode();
-    if (mode === 'amount'){
-      let dollars;
-      if (raw.endsWith('%')){
-        const pct = parseFloat(raw.slice(0,-1));
-        if (!isNaN(pct)) dollars = centsToDollars(Math.min(wealthC, Math.max(0, Math.round(wealthC * (pct/100)))));
-      } else {
-        const num = parseFloat(raw);
-        if (!isNaN(num)) dollars = Math.min(centsToDollars(wealthC), Math.max(0, num));
-      }
-      if (typeof dollars === 'number'){
-        betSlider.value = String(dollars);
-        betSliderLabel.textContent = fmt(dollars);
-      }
+
+    if (mode === 'amount') {
+      el.betSlider.min = '0';
+      el.betSlider.max = (state.wealthC / 100).toFixed(2);
+      el.betSlider.step = '0.01';
+      el.betSliderCap.textContent = `max ${fmtCents(state.wealthC)}`;
     } else {
-      let pct;
-      if (raw.endsWith('%')) {
-        const p = parseFloat(raw.slice(0,-1));
-        if (!isNaN(p)) pct = p;
-      } else {
-        const num = parseFloat(raw);
-        if (!isNaN(num)) pct = num; // interpret as % in percent mode
-      }
-      if (typeof pct === 'number'){
-        pct = Math.max(0, Math.min(pct, 100));
-        betSlider.value = String(pct);
-        betSliderLabel.textContent = `${pct.toFixed(1)}%`;
-      }
+      el.betSlider.min = '0';
+      el.betSlider.max = '100';
+      el.betSlider.step = '0.1';
+      el.betSliderCap.textContent = 'max 100%';
     }
-  }
 
-  function updateHint(){
-    const { betC, error } = parseBet();
-    const raw = getBetFirstLine().trim().toLowerCase();
-    if (error || betC == null){
-      elHint.textContent = (currentMode() === 'percent') ? 'Tip: enter a % like 5%' : '';
-    } else if (currentMode() === 'percent' || raw.endsWith('%')) {
-      elHint.textContent = `= ${fmt(centsToDollars(betC))} (of ${fmt(centsToDollars(wealthC))})`;
+    if (syncFromInput) syncSliderFromInput();
+
+    if (mode === 'amount') {
+      el.betSliderLabel.textContent = fmt(Number(el.betSlider.value || 0));
     } else {
-      elHint.textContent = '';
+      el.betSliderLabel.textContent = `${Number(el.betSlider.value || 0).toFixed(1)}%`;
     }
   }
 
-  // Clamp helper (UI) when user types over max
-  function clampBetToWealth(){
-    if (currentMode() === 'amount'){
-      const dollars = centsToDollars(wealthC);
-      setBetFirstLine(dollars.toFixed(2).replace(/\.00$/,''));
-      betSlider.value = String(dollars);
-      betSliderLabel.textContent = fmt(dollars);
-      betSlider.max = String(dollars);
+  function syncSliderFromInput() {
+    const parsed = parseBet();
+    const mode = currentMode();
+
+    if (parsed.error || parsed.betC == null) {
+      el.betSlider.value = '0';
+      updateBetSliderUI(false);
+      return;
+    }
+
+    if (mode === 'amount') {
+      el.betSlider.value = String((parsed.betC / 100).toFixed(2));
+      el.betSliderLabel.textContent = fmtCents(parsed.betC);
     } else {
-      setBetFirstLine('100%');
-      betSlider.value = '100';
-      betSliderLabel.textContent = '100%';
-      betSlider.max = '100';
+      const pct = state.wealthC > 0 ? (parsed.betC / state.wealthC) * 100 : 0;
+      el.betSlider.value = String(Math.max(0, Math.min(100, pct)));
+      el.betSliderLabel.textContent = `${Number(el.betSlider.value).toFixed(1)}%`;
     }
-    updateHint();
   }
 
-  // Parse bet -> integer cents, errors: invalid/negative/toobig/quit
-  function parseBet(){
-    let raw = getBetFirstLine().trim().toLowerCase();
-    if (raw === 'q' || raw === 'quit' || raw === 'exit') return { betC:null, error:'quit' };
+  function syncInputFromSlider() {
+    const mode = currentMode();
+    const value = Number(el.betSlider.value || 0);
 
-    const isPercentLiteral = raw.endsWith('%');
-    let betC = null;
-
-    try{
-      if (isPercentLiteral){
-        const pct = parseFloat(raw.slice(0,-1));
-        if (isNaN(pct)) throw new Error();
-        if (pct < 0) return { betC:null, error:'negative' };
-        betC = Math.round(wealthC * (pct/100));
-      } else {
-        if (currentMode() === 'percent'){
-          const pct = parseFloat(raw);
-          if (isNaN(pct)) throw new Error();
-          if (pct < 0) return { betC:null, error:'negative' };
-          betC = Math.round(wealthC * (pct/100));
-        } else {
-          const val = parseFloat(raw);
-          if (isNaN(val)) throw new Error();
-          betC = toCents(val);
-        }
-      }
-    } catch {
-      return { betC:null, error:'invalid' };
+    if (mode === 'amount') {
+      const text = value.toFixed(2).replace(/\.00$/, '');
+      el.betInput.value = text;
+      el.betSliderLabel.textContent = fmt(value);
+    } else {
+      const text = `${value.toFixed(1).replace(/\.0$/, '')}%`;
+      el.betInput.value = text;
+      el.betSliderLabel.textContent = `${value.toFixed(1)}%`;
     }
-    if (betC < 0) return { betC:null, error:'negative' };
-    // allow exactly full wealth; error only if strictly greater
-    if (betC > wealthC) return { betC:null, error:'toobig' };
-    return { betC, error:null };
+
+    updateBetHint();
   }
 
-  function showWarnDialog(title, msg){
-    if (!warnDialog) { alert(`${title}\n\n${msg}`); return; }
-    warnTitle.textContent = title;
-    warnMsg.textContent = msg;
-    if (typeof warnDialog.showModal === 'function') warnDialog.showModal();
-    else warnDialog.setAttribute('open','');
+  function updateControlsDisabled() {
+    const disabled = state.isFlipping;
+    el.flipBtn.disabled = state.autoActive || disabled;
+    el.autoBtn.disabled = state.autoActive || disabled;
+    el.stopBtn.disabled = !state.autoActive;
+    el.newBtn.disabled = disabled;
+    el.quitBtn.disabled = disabled;
+    el.betInput.disabled = disabled;
+    el.betSlider.disabled = disabled;
+    modeRadios.forEach(r => r.disabled = disabled);
   }
 
-  // ------- Chart -------
-  const baseLayout = {
-    margin:{l:40,r:10,t:10,b:40},
-    paper_bgcolor:'rgba(0,0,0,0)',
-    plot_bgcolor:'rgba(0,0,0,0)',
-    xaxis:{ title:'Round', gridcolor:'rgba(255,255,255,.08)', zeroline:false },
-    yaxis:{ title:'Wealth ($)', gridcolor:'rgba(255,255,255,.08)', zeroline:false },
-    font:{ color:'#e8ecf3' }
-  };
-  const baseConfig = { displayModeBar:false, responsive:true };
-
-  function chartData(){
-    const rounds = history.map((_,i)=>i);
+  function chartTrace() {
+    const rounds = state.history.map((_, i) => i);
+    const colors = state.history.map((_, i) => i === state.history.length - 1 ? '#ff7a7a' : '#6aa6ff');
+    const sizes = state.history.map((_, i) => i === state.history.length - 1 ? 10 : 6);
     return [{
       x: rounds,
-      y: history,
+      y: state.history,
       mode: 'lines+markers',
-      line: { width: 2, color: '#1f77b4' },
-      marker: { size: markerSizes(), color: markerColors() },
+      line: { width: 3, color: '#6aa6ff' },
+      marker: { color: colors, size: sizes },
       hovertemplate: 'Round %{x}<br>Wealth %{y:.2f}<extra></extra>'
     }];
   }
 
-  function initChart(){
-    Plotly.newPlot('chart', chartData(), baseLayout, baseConfig);
-  }
-  function updateChart(){
-    Plotly.react('chart', chartData(), baseLayout, baseConfig);
-  }
-  function drawFinalChart(){
-    const rounds = history.map((_,i)=>i);
-    Plotly.newPlot(finalChart, [{
-      x: rounds,
-      y: history,
-      mode:'lines+markers',
-      line:{width:2, color:'#1f77b4'},
-      marker:{size: markerSizes(), color: markerColors()},
-      hovertemplate:'Round %{x}<br>Wealth %{y:.2f}<extra></extra>'
-    }], baseLayout, baseConfig);
+  function hasPlotly() {
+    return typeof window.Plotly !== 'undefined';
   }
 
-  // ------- Game mechanics -------
-  function flipOnce(){
-    const { betC, error } = parseBet();
-    if (error === 'quit'){ quitGame(); return; }
-    if (error === 'invalid'){ updateStats('Invalid Input: Enter a valid number or percentage (e.g., 10 or 10%).'); stopAuto(); return; }
-    if (error === 'negative'){ updateStats('Invalid Bet: Bet cannot be negative.'); stopAuto(); return; }
-    if (error === 'toobig'){
-      clampBetToWealth(); // snap UI to the max
-      stopAuto();
-      showWarnDialog('Invalid Bet', 'Bet cannot exceed current wealth.');
+  function setChartFallback(target, message) {
+    if (!target) return;
+    target.innerHTML = `<div style="display:grid;place-items:center;height:100%;min-height:180px;padding:18px;border:1px dashed rgba(255,255,255,.15);border-radius:18px;color:var(--muted);text-align:center;line-height:1.45;">${message}</div>`;
+  }
+
+  const chartLayout = {
+    margin: { l: 46, r: 14, t: 10, b: 44 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { color: '#ecf2ff' },
+    xaxis: {
+      title: 'Round',
+      gridcolor: 'rgba(255,255,255,.08)',
+      zeroline: false,
+      tickfont: { color: '#b9c7e8' }
+    },
+    yaxis: {
+      title: 'Wealth ($)',
+      gridcolor: 'rgba(255,255,255,.08)',
+      zeroline: false,
+      tickfont: { color: '#b9c7e8' }
+    }
+  };
+  const chartConfig = { displayModeBar: false, responsive: true };
+
+  function initChart() {
+    if (!hasPlotly()) {
+      setChartFallback($('chart'), 'Chart unavailable because Plotly could not load. The game still works normally.');
       return;
     }
-    if (betC == null) return;
+    Plotly.newPlot('chart', chartTrace(), chartLayout, chartConfig);
+  }
 
-    // Biased coin: Heads 60%, Tails 40%
-    const outcome = Math.random() < 0.60 ? 'H' : 'T';
+  function updateChart() {
+    if (!hasPlotly()) return;
+    Plotly.react('chart', chartTrace(), chartLayout, chartConfig);
+  }
 
-    roundNum += 1;
-    if (outcome==='H'){
-      wealthC += betC;
-      updateStats(`Round ${roundNum}: HEADS! You win ${fmt(centsToDollars(betC))}. Wealth ${fmt(centsToDollars(wealthC))}.`);
-    } else {
-      wealthC -= betC;
-      updateStats(`Round ${roundNum}: TAILS! You lose ${fmt(centsToDollars(betC))}. Wealth ${fmt(centsToDollars(wealthC))}.`);
+  function drawFinalChart() {
+    if (!hasPlotly()) {
+      setChartFallback(el.finalChart, 'Final chart unavailable because Plotly could not load.');
+      return;
     }
-    const lastLine = outcome === 'H'
-      ? `Last: Round ${roundNum} — HEADS (+${fmt(centsToDollars(betC))}) → Wealth ${fmt(centsToDollars(wealthC))}`
-      : `Last: Round ${roundNum} — TAILS (−${fmt(centsToDollars(betC))}) → Wealth ${fmt(centsToDollars(wealthC))}`;
-    setStatusLine(lastLine);
-    history.push(centsToDollars(wealthC));
-    updateChart();
-    updateHint();
-
-    updateBetSliderUI();
-    if (wealthC <= 0){ endGame("You've hit $0. Game over."); }
+    Plotly.newPlot(el.finalChart, chartTrace(), chartLayout, chartConfig);
   }
 
-  function newGame(){
-    stopAuto();
-    wealthC = 10000;
-    history = [centsToDollars(wealthC)];
-    roundNum = 0;
-    // default bet is 0 (in either mode)
-    if (currentMode() === 'percent') setBetFirstLine('0%'); else setBetFirstLine('0');
-    setStatusLine('Last: —');
-    updateStats('New game started! Enter a bet and click Flip.');
-    initChart();
-    updateHint();
-    betSlider.value = '0';
-    updateBetSliderUI();
-    setStatusLine('Last: —');
+  function render() {
+    el.wealth.textContent = fmtCents(state.wealthC);
+    el.round.textContent = String(state.round);
+    el.lastBadge.textContent = state.lastOutcome === 'H' ? 'Heads' : state.lastOutcome === 'T' ? 'Tails' : '—';
+    updateModeUI();
+    updateBetSliderUI(true);
+    updateBetHint();
+    updateControlsDisabled();
   }
 
-  function quitGame(){ endGame('You chose to end the game.'); }
-  function endGame(message){
-    stopAuto();
-    dlgTitle.textContent = message;
-    drawFinalChart();
-    if (typeof endDialog.showModal === 'function') endDialog.showModal();
-    else endDialog.setAttribute('open','');
-  }
+  function animateCoin(result) {
+    const finalDeg = result === 'H' ? 0 : 180;
+    const startDeg = state.currentFace === 'H' ? 0 : 180;
+    const spinCount = prefersReducedMotion ? 1 : 5;
+    const duration = COIN_ANIMATION_MS;
+    const midTranslate = prefersReducedMotion ? -20 : -82;
+    const endDeg = startDeg + (360 * spinCount) + (result === 'H' ? 0 : 180);
 
-  function startAuto(){
-    const { error } = parseBet();
-    if (error){ flipOnce(); return; }
-    if (autoTimer) return;
-    autoBtn.disabled = true; stopBtn.disabled = false;
-    autoTimer = setInterval(flipOnce, autoDelayMs);
-  }
-  function stopAuto(){
-    if (autoTimer){ clearInterval(autoTimer); autoTimer = null; }
-    autoBtn.disabled = false; stopBtn.disabled = true;
-  }
+    state.currentFace = result;
+    el.coinWrap.classList.add('flipping');
+    el.coinResultTitle.textContent = 'TOSSING…';
+    el.coinResultSub.textContent = 'The coin is in the air.';
+    el.coin.setAttribute('aria-label', 'coin tossing');
 
-  // ------- Compact mode -------
-  function applyCompact(on){
-    document.body.classList.toggle('compact', on);
-    if (compactBtn){
-      compactBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      compactBtn.textContent = on ? 'Compact: On' : 'Compact: Off';
+    if (!el.coin.animate) {
+      el.coin.style.transform = `rotateY(${finalDeg}deg)`;
+      el.coin.dataset.face = result;
+      el.coinWrap.classList.remove('flipping');
+      el.coinResultTitle.textContent = result === 'H' ? 'HEADS' : 'TAILS';
+      el.coinResultSub.textContent = result === 'H' ? 'Heads wins this round.' : 'Tails loses this round.';
+      el.coin.setAttribute('aria-label', `coin showing ${result === 'H' ? 'heads' : 'tails'}`);
+      return Promise.resolve();
     }
-    try { Plotly.Plots.resize('chart'); } catch {}
-  }
-  const savedCompact = localStorage.getItem('compact') === '1';
-  applyCompact(savedCompact);
-  if (compactBtn){
-    compactBtn.addEventListener('click', () => {
-      const nowOn = !document.body.classList.contains('compact');
-      applyCompact(nowOn);
-      localStorage.setItem('compact', nowOn ? '1' : '0');
+
+    return new Promise(resolve => {
+      const anim = el.coin.animate([
+        { transform: `translateY(0px) rotateX(0deg) rotateY(${startDeg}deg)` },
+        { transform: `translateY(${midTranslate}px) rotateX(1080deg) rotateY(${startDeg + endDeg / 2}deg)`, offset: 0.45 },
+        { transform: `translateY(0px) rotateX(2160deg) rotateY(${endDeg}deg)` }
+      ], {
+        duration,
+        easing: 'cubic-bezier(.17,.84,.21,1)',
+        fill: 'forwards'
+      });
+
+      anim.onfinish = () => {
+        el.coin.style.transform = `rotateY(${finalDeg}deg)`;
+        el.coin.dataset.face = result;
+        el.coinWrap.classList.remove('flipping');
+        el.coinResultTitle.textContent = result === 'H' ? 'HEADS' : 'TAILS';
+        el.coinResultSub.textContent = result === 'H' ? 'Heads wins this round.' : 'Tails loses this round.';
+        el.coin.setAttribute('aria-label', `coin showing ${result === 'H' ? 'heads' : 'tails'}`);
+        resolve();
+      };
+
+      anim.oncancel = () => {
+        el.coin.style.transform = `rotateY(${finalDeg}deg)`;
+        el.coin.dataset.face = result;
+        el.coinWrap.classList.remove('flipping');
+        resolve();
+      };
     });
   }
 
-  // ------- Events -------
-  flipBtn.addEventListener('click', flipOnce);
-  newBtn.addEventListener('click', newGame);
-  quitBtn.addEventListener('click', quitGame);
-  autoBtn.addEventListener('click', startAuto);
-  stopBtn.addEventListener('click', stopAuto);
+  function scheduleNextAutoFlip() {
+    clearTimeout(state.autoTimer);
+    if (!state.autoActive || state.wealthC <= 0) return;
+    state.autoTimer = setTimeout(() => {
+      flipOnce();
+    }, Math.max(0, state.autoDelayMs - COIN_ANIMATION_MS));
+  }
 
-  // Text input ↔ slider sync + clamp on overshoot while typing
-  elBet.addEventListener('input', () => {
-    updateHint();
-    syncSliderFromBet();
+  function startAuto() {
+    if (state.autoActive || state.isFlipping) return;
     const { error } = parseBet();
-    if (error === 'toobig') clampBetToWealth(); // allow full-wealth, block > wealth
-  });
+    if (error) {
+      flipOnce();
+      return;
+    }
+    state.autoActive = true;
+    updateControlsDisabled();
+    flipOnce();
+  }
 
-  betSlider.addEventListener('input', () => { syncBetFromSlider(); updateBetSliderUI('slider'); });
+  function stopAuto() {
+    state.autoActive = false;
+    clearTimeout(state.autoTimer);
+    state.autoTimer = null;
+    updateControlsDisabled();
+  }
 
-  // Mode toggle
-  modeRadios.forEach(r => r.addEventListener('change', () => {
-    const raw = elBet.value.trim();
-    if (r.value === 'percent' && r.checked){
-      if (raw && !raw.endsWith('%') && !isNaN(parseFloat(raw))) elBet.value = raw + '%';
-    } else if (r.value === 'amount' && r.checked){
-      if (raw.endsWith('%')){
-        const val = parseFloat(raw.slice(0,-1));
-        if (!isNaN(val)) setBetFirstLine(String(val));
+  function endGame(message) {
+    stopAuto();
+    el.dlgTitle.textContent = message;
+    el.dlgSub.textContent = `Final wealth: ${fmtCents(state.wealthC)} after ${state.round} round${state.round === 1 ? '' : 's'}.`;
+    drawFinalChart();
+    if (typeof el.endDialog.showModal === 'function') el.endDialog.showModal();
+    else el.endDialog.setAttribute('open','');
+  }
+
+  function quitGame() {
+    if (state.isFlipping) return;
+    endGame('You ended the game.');
+  }
+
+  function newGame() {
+    if (state.isFlipping) return;
+    stopAuto();
+    state.wealthC = 10000;
+    state.history = [100];
+    state.round = 0;
+    state.lastOutcome = null;
+    state.currentFace = 'H';
+    el.coin.style.transform = 'rotateY(0deg)';
+    el.coin.dataset.face = 'H';
+    el.coinResultTitle.textContent = 'READY';
+    el.coinResultSub.textContent = 'Tap Flip to toss the coin.';
+    el.betInput.value = currentMode() === 'percent' ? '0%' : '0';
+    el.lastRound.textContent = 'Last: —';
+    updateOutcome('New game started! Enter a bet and press Flip.');
+    initChart();
+    render();
+  }
+
+  async function flipOnce() {
+    if (state.isFlipping) return;
+
+    const parsed = parseBet();
+
+    if (parsed.error === 'quit') {
+      quitGame();
+      return;
+    }
+    if (parsed.error === 'invalid') {
+      updateOutcome('Invalid input. Enter a number like 10.50, a percentage like 10%, or type all.', 'neutral');
+      el.lastRound.textContent = 'Last: Invalid input.';
+      stopAuto();
+      updateBetHint();
+      return;
+    }
+    if (parsed.error === 'negative') {
+      updateOutcome('Invalid bet. Bet cannot be negative.', 'neutral');
+      el.lastRound.textContent = 'Last: Negative bet rejected.';
+      stopAuto();
+      updateBetHint();
+      return;
+    }
+    if (parsed.error === 'toobig') {
+      setBetToMax();
+      updateOutcome(`That bet was above your bankroll, so the field was set to the maximum: ${fmtCents(state.wealthC)}.`, 'neutral');
+      el.lastRound.textContent = 'Last: Bet was above current wealth.';
+      stopAuto();
+      showWarnDialog('Invalid Bet', `Bet cannot exceed your current wealth. I set the field to the maximum allowed: ${fmtCents(state.wealthC)}.`);
+      return;
+    }
+
+    const betC = parsed.betC ?? 0;
+    const outcome = Math.random() < 0.60 ? 'H' : 'T';
+
+    state.isFlipping = true;
+    updateControlsDisabled();
+    updateOutcome('Flipping the coin…', 'waiting');
+    await animateCoin(outcome);
+
+    state.round += 1;
+    state.lastOutcome = outcome;
+
+    if (outcome === 'H') {
+      state.wealthC += betC;
+      updateOutcome(`Round ${state.round}: HEADS! You win ${fmtCents(betC)}. Wealth is now ${fmtCents(state.wealthC)}.`, 'win');
+      el.lastRound.textContent = `Last: Round ${state.round} — HEADS (+${fmtCents(betC)}) → ${fmtCents(state.wealthC)}`;
+    } else {
+      state.wealthC -= betC;
+      updateOutcome(`Round ${state.round}: TAILS! You lose ${fmtCents(betC)}. Wealth is now ${fmtCents(state.wealthC)}.`, 'loss');
+      el.lastRound.textContent = `Last: Round ${state.round} — TAILS (−${fmtCents(betC)}) → ${fmtCents(state.wealthC)}`;
+    }
+
+    state.history.push(state.wealthC / 100);
+    updateChart();
+    render();
+    state.isFlipping = false;
+    updateControlsDisabled();
+
+    if (state.wealthC <= 0) {
+      endGame("You've hit $0. Game over.");
+      return;
+    }
+
+    if (state.autoActive) scheduleNextAutoFlip();
+  }
+
+  function applyCompact(on) {
+    document.body.classList.toggle('compact', on);
+    el.compactBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    el.compactBtn.textContent = on ? 'Compact: On' : 'Compact: Off';
+    localStorage.setItem('compact', on ? '1' : '0');
+    setTimeout(() => {
+      if (!hasPlotly()) return;
+      try { Plotly.Plots.resize('chart'); } catch {}
+    }, 30);
+  }
+
+  function handleModeChange() {
+    const raw = el.betInput.value.trim();
+    const nextMode = currentMode();
+
+    if (raw && !/^(all|max|quit|exit|q)$/i.test(raw)) {
+      if (nextMode === 'percent' && !raw.endsWith('%')) {
+        const money = parseMoneyToCents(raw);
+        if (money != null) {
+          const pct = state.wealthC > 0 ? (money / state.wealthC) * 100 : 0;
+          el.betInput.value = `${Math.max(0, Math.min(100, pct)).toFixed(1).replace(/\.0$/, '')}%`;
+        }
+      } else if (nextMode === 'amount' && raw.endsWith('%')) {
+        const pct = parsePercent(raw);
+        if (pct != null) {
+          const betC = Math.round(state.wealthC * (Math.max(0, Math.min(100, pct)) / 100));
+          el.betInput.value = (betC / 100).toFixed(2).replace(/\.00$/, '');
+        }
       }
     }
-    // After switching, clamp if needed
-    const { error } = parseBet();
-    if (error === 'toobig') clampBetToWealth();
-    updateHint();
-    // reconfigure slider for new mode to match current bet
-    if (r.value === 'percent' && r.checked){
-      const { betC, error:err2 } = parseBet();
-      const pct = (!err2 && betC!=null && wealthC>0) ? Math.min(100, Math.max(0, (betC/wealthC)*100)) : 0;
-      betSlider.value = String(pct);
-    } else if (r.value === 'amount' && r.checked){
-      const { betC, error:err3 } = parseBet();
-      const amt = (!err3 && betC!=null) ? Math.min(centsToDollars(wealthC), Math.max(0, centsToDollars(betC))) : 0;
-      betSlider.value = String(amt);
-    }
-    updateBetSliderUI();
-  }));
 
-  // Enter key to flip
-  elBet.addEventListener('keydown', (e)=>{ if (e.key === 'Enter') flipOnce(); });
+    updateModeUI();
+    updateBetSliderUI(true);
+    updateBetHint();
+  }
 
-  // Speed slider
-  speed.addEventListener('input', () => {
-    autoDelayMs = Number(speed.value);
-    msLabel.textContent = String(autoDelayMs);
-    if (autoTimer){ stopAuto(); startAuto(); }
+  el.flipBtn.addEventListener('click', flipOnce);
+  el.autoBtn.addEventListener('click', startAuto);
+  el.stopBtn.addEventListener('click', stopAuto);
+  el.newBtn.addEventListener('click', newGame);
+  el.quitBtn.addEventListener('click', quitGame);
+
+  el.betInput.addEventListener('input', () => {
+    updateBetHint();
+    syncSliderFromInput();
   });
 
-  // Dialog buttons
-  playAgainBtn.addEventListener('click', () => {
-    if (endDialog.close) endDialog.close(); else endDialog.removeAttribute('open');
+  el.betInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      flipOnce();
+    }
+  });
+
+  el.betInput.addEventListener('blur', () => {
+    if (parseBet().error === 'toobig') setBetToMax();
+  });
+
+  el.betSlider.addEventListener('input', () => {
+    syncInputFromSlider();
+  });
+
+  modeRadios.forEach(radio => {
+    radio.addEventListener('change', handleModeChange);
+  });
+
+  quickButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pct = Number(btn.dataset.quick || 0);
+      setQuickPercent(pct);
+    });
+  });
+
+  el.speed.addEventListener('input', () => {
+    state.autoDelayMs = Number(el.speed.value);
+    el.msLabel.textContent = String(state.autoDelayMs);
+    if (state.autoActive && !state.isFlipping) scheduleNextAutoFlip();
+  });
+
+  el.compactBtn.addEventListener('click', () => {
+    applyCompact(!document.body.classList.contains('compact'));
+  });
+
+  el.playAgainBtn.addEventListener('click', () => {
+    if (el.endDialog.close) el.endDialog.close();
+    else el.endDialog.removeAttribute('open');
     newGame();
   });
-  closeBtn.addEventListener('click', () => {
-    if (endDialog.close) endDialog.close(); else endDialog.removeAttribute('open');
-  });
-  warnOkBtn.addEventListener('click', () => {
-    if (warnDialog.close) warnDialog.close(); else warnDialog.removeAttribute('open');
+
+  el.closeBtn.addEventListener('click', () => {
+    if (el.endDialog.close) el.endDialog.close();
+    else el.endDialog.removeAttribute('open');
   });
 
-  // Resize Plotly on orientation change
+  el.warnOkBtn.addEventListener('click', () => {
+    if (el.warnDialog.close) el.warnDialog.close();
+    else el.warnDialog.removeAttribute('open');
+  });
+
   window.addEventListener('orientationchange', () => {
-    setTimeout(() => { try{ Plotly.Plots.resize('chart'); }catch{} }, 250);
+    setTimeout(() => {
+      if (!hasPlotly()) return;
+      try { Plotly.Plots.resize('chart'); } catch {}
+    }, 250);
   });
 
-  // ------- Init -------
-  updateStats();
+  window.addEventListener('resize', () => {
+    if (!hasPlotly()) return;
+    try { Plotly.Plots.resize('chart'); } catch {}
+  });
+
+  updateOutcome('Welcome! Enter a bet and press Flip.');
   initChart();
-  updateHint();
-  betSlider.value = '0';
-  updateBetSliderUI();
+  render();
+  el.msLabel.textContent = String(state.autoDelayMs);
+  applyCompact(localStorage.getItem('compact') === '1');
 })();
 </script>
 </body>
 </html>
-
