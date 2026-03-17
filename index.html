@@ -682,28 +682,30 @@
       display:none;
     }
     .coin-play-row{
-      flex-direction:row;
-      align-items:center;
-      justify-content:space-between;
+      flex-direction:column;
+      align-items:stretch;
+      justify-content:flex-start;
       gap:8px;
     }
     .coin-side{
-      width:auto;
-      min-width:92px;
-      flex:0 0 92px;
-      gap:8px;
+      width:100%;
+      min-width:0;
+      flex:none;
+      align-items:stretch;
+      gap:6px;
     }
     .flip-btn{
-      min-width:92px;
+      min-width:0;
       width:100%;
-      min-height:44px;
+      min-height:42px;
       padding:10px 10px;
       border-radius:14px;
       font-size:16px;
     }
     .coin-stage{
-      flex:1 1 auto;
-      min-height:132px;
+      width:100%;
+      flex:none;
+      min-height:124px;
     }
     .coin-stage::before{
       bottom:10px;
@@ -733,7 +735,8 @@
     .coin-face span{font-size:34px}
     .coin-face small{font-size:10px}
     .coin-result{
-      min-height:34px;
+      width:100%;
+      min-height:30px;
       gap:2px;
       text-align:center;
     }
@@ -854,7 +857,7 @@
     .title{font-size:16px}
     .hero-grid{grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr)}
     .bankroll-value{font-size:clamp(26px, 8.4vw, 34px)}
-    .coin-stage{min-height:118px}
+    .coin-stage{min-height:112px}
     .coin-wrap{width:96px;height:96px}
     .coin{width:86px;height:86px}
     .coin-ring{width:98px;height:98px}
@@ -1437,7 +1440,9 @@
     const spinCount = prefersReducedMotion ? 1 : 5;
     const duration = COIN_ANIMATION_MS;
     const midTranslate = prefersReducedMotion ? -20 : -82;
-    const endDeg = startDeg + (360 * spinCount) + (result === 'H' ? 0 : 180);
+    const deltaToFinal = (finalDeg - startDeg + 360) % 360;
+    const endDeg = startDeg + (360 * spinCount) + deltaToFinal;
+    const midDeg = startDeg + ((endDeg - startDeg) * 0.5);
 
     state.currentFace = result;
     el.coinWrap.classList.add('flipping');
@@ -1458,7 +1463,7 @@
     return new Promise(resolve => {
       const anim = el.coin.animate([
         { transform: `translateY(0px) rotateX(0deg) rotateY(${startDeg}deg)` },
-        { transform: `translateY(${midTranslate}px) rotateX(1080deg) rotateY(${startDeg + endDeg / 2}deg)`, offset: 0.45 },
+        { transform: `translateY(${midTranslate}px) rotateX(1080deg) rotateY(${midDeg}deg)`, offset: 0.45 },
         { transform: `translateY(0px) rotateX(2160deg) rotateY(${endDeg}deg)` }
       ], {
         duration,
@@ -1577,8 +1582,9 @@
       return;
     }
 
-    const betC = parsed.betC ?? 0;
+    const betC = Math.max(0, Math.min(state.wealthC, parsed.betC ?? 0));
     const outcome = Math.random() < 0.60 ? 'H' : 'T';
+    const wealthBeforeC = state.wealthC;
 
     state.isFlipping = true;
     updateControlsDisabled();
@@ -1588,12 +1594,13 @@
     state.round += 1;
     state.lastOutcome = outcome;
 
+    const deltaC = outcome === 'H' ? betC : -betC;
+    state.wealthC = Math.max(0, wealthBeforeC + deltaC);
+
     if (outcome === 'H') {
-      state.wealthC += betC;
       updateOutcome(`Round ${state.round}: HEADS! You win ${fmtCents(betC)}. Wealth is now ${fmtCents(state.wealthC)}.`, 'win');
       el.lastRound.textContent = `Last: Round ${state.round} — HEADS (+${fmtCents(betC)}) → ${fmtCents(state.wealthC)}`;
     } else {
-      state.wealthC -= betC;
       updateOutcome(`Round ${state.round}: TAILS! You lose ${fmtCents(betC)}. Wealth is now ${fmtCents(state.wealthC)}.`, 'loss');
       el.lastRound.textContent = `Last: Round ${state.round} — TAILS (−${fmtCents(betC)}) → ${fmtCents(state.wealthC)}`;
     }
