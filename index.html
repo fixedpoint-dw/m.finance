@@ -60,7 +60,7 @@
   .topbar{
     display:flex;
     align-items:center;
-    justify-content:space-between;
+    justify-content:flex-start;
     gap:12px;
     flex-wrap:wrap;
     padding:4px 4px 16px;
@@ -456,12 +456,18 @@
     line-height:1.35;
   }
 
-  .actions-row{
+  .actions-stack{
     display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-top:8px;
+    flex-direction:column;
+    gap:12px;
+    margin-top:10px;
   }
+  .actions-row{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:10px;
+  }
+  .actions-row .btn{width:100%}
   .btn{
     border:none;
     cursor:pointer;
@@ -481,7 +487,7 @@
   .btn.danger{background:linear-gradient(135deg,#d64b6f,#ff7a7a)}
   .btn.secondary{background:rgba(255,255,255,.08); color:var(--text); border:1px solid rgba(255,255,255,.1)}
 
-  .speed-row{margin-top:16px}
+  .speed-row{margin-top:0}
   .speed-head{
     display:flex;
     justify-content:space-between;
@@ -778,20 +784,18 @@
       backdrop-filter:none;
     }
     .actions-card .group-title{display:none}
-    .actions-row{
-      margin-top:0;
+    .actions-stack{
       gap:8px;
-      flex-wrap:nowrap;
-      overflow-x:auto;
-      padding-bottom:2px;
-      scrollbar-width:none;
+      margin-top:0;
     }
-    .actions-row::-webkit-scrollbar{display:none}
+    .actions-row{
+      gap:8px;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+    }
     .actions-row .btn{
-      flex:0 0 auto;
       min-height:40px;
       padding:9px 12px;
-      white-space:nowrap;
+      white-space:normal;
     }
     .speed-row{margin-top:8px}
     .speed-head{
@@ -868,11 +872,8 @@
           <div class="title">🪙 Coin Flip Betting Game</div>
           <div class="subrow">
             <span class="pill">Biased coin: Heads 60% • Tails 40%</span>
-            <span class="pill">Type <b>10%</b> in either mode</span>
-            <span class="pill">Keywords: <b>all</b>, <b>max</b>, <b>quit</b></span>
           </div>
         </div>
-        <button class="toggle-btn" id="compactBtn" aria-pressed="false">Compact: Off</button>
       </div>
 
       <section class="hero-grid">
@@ -955,7 +956,7 @@
             <input id="betInput" class="bet-input" type="text" inputmode="decimal" enterkeyhint="go" autocomplete="off" spellcheck="false" value="0" aria-label="Bet amount or percentage" />
           </div>
           <div class="bet-help">
-            <div class="bet-hint" id="betHint">Enter a dollar amount, a percentage, or “all”.</div>
+            <div class="bet-hint" id="betHint">Enter a dollar amount or a percentage.</div>
             <div id="betMaxLabel">Max: $100.00</div>
           </div>
 
@@ -972,19 +973,24 @@
 
         <div class="card actions-card">
           <div class="group-title">Actions</div>
-          <div class="actions-row" style="margin-top:10px;">
-            <button class="btn success" id="autoBtn">Auto Play</button>
-            <button class="btn warn" id="stopBtn" disabled>Stop Auto</button>
-            <button class="btn secondary" id="newBtn">New Game</button>
-            <button class="btn danger" id="quitBtn">Quit</button>
-          </div>
-
-          <div class="speed-row">
-            <div class="speed-head">
-              <span>Auto speed</span>
-              <span><span id="msLabel">700</span> ms per round target</span>
+          <div class="actions-stack">
+            <div class="actions-row">
+              <button class="btn success" id="autoBtn">Auto Play</button>
+              <button class="btn warn" id="stopBtn" disabled>Stop Auto</button>
             </div>
-            <input id="speed" type="range" min="200" max="1800" step="50" value="700" style="width:100%;" />
+
+            <div class="speed-row">
+              <div class="speed-head">
+                <span>Auto speed</span>
+                <span><span id="msLabel">700</span> ms per round target</span>
+              </div>
+              <input id="speed" type="range" min="200" max="1800" step="50" value="700" style="width:100%;" />
+            </div>
+
+            <div class="actions-row">
+              <button class="btn secondary" id="newBtn">New Game</button>
+              <button class="btn danger" id="quitBtn">Quit</button>
+            </div>
           </div>
         </div>
 
@@ -995,7 +1001,7 @@
       </section>
 
       <div class="footer">
-        <div>Cleaner input, animated coin toss, more visible bankroll, and exact-money parsing so “bet it all” works reliably.</div>
+        <div>Cleaner input, animated coin toss, more visible bankroll, and exact-money parsing so full-bankroll bets work reliably.</div>
         <div>Mobile friendly • Same game rules • All calculations stay in your browser</div>
       </div>
     </div>
@@ -1063,7 +1069,6 @@
     quitBtn: $('quitBtn'),
     speed: $('speed'),
     msLabel: $('msLabel'),
-    compactBtn: $('compactBtn'),
     coin: $('coin'),
     coinWrap: $('coinWrap'),
     coinResultTitle: $('coinResultTitle'),
@@ -1188,8 +1193,8 @@
 
     if (parsed.error === 'invalid') {
       el.betHint.textContent = mode === 'percent'
-        ? 'Enter a percent like 5 or 5%, or type all.'
-        : 'Enter dollars like 10.50, a percent like 10%, or type all.';
+        ? 'Enter a percent like 5 or 5%.'
+        : 'Enter dollars like 10.50 or a percent like 10%.';
       el.betHint.className = 'bet-hint';
       return;
     }
@@ -1207,7 +1212,7 @@
     }
 
     if (parsed.betC == null) {
-      el.betHint.textContent = 'Enter a dollar amount, a percentage, or “all”.';
+      el.betHint.textContent = 'Enter a dollar amount or a percentage.';
       el.betHint.className = 'bet-hint';
       return;
     }
@@ -1495,7 +1500,7 @@
       return;
     }
     if (parsed.error === 'invalid') {
-      updateOutcome('Invalid input. Enter a number like 10.50, a percentage like 10%, or type all.', 'neutral');
+      updateOutcome('Invalid input. Enter a number like 10.50 or a percentage like 10%.', 'neutral');
       el.lastRound.textContent = 'Last: Invalid input.';
       stopAuto();
       updateBetHint();
@@ -1554,16 +1559,6 @@
     if (state.autoActive) scheduleNextAutoFlip();
   }
 
-  function applyCompact(on) {
-    document.body.classList.toggle('compact', on);
-    el.compactBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    el.compactBtn.textContent = on ? 'Compact: On' : 'Compact: Off';
-    localStorage.setItem('compact', on ? '1' : '0');
-    setTimeout(() => {
-      if (!hasPlotly()) return;
-      try { Plotly.Plots.resize($('chart')); } catch {}
-    }, 30);
-  }
 
   function handleModeChange() {
     const raw = el.betInput.value.trim();
@@ -1627,9 +1622,6 @@
     if (state.autoActive && !state.isFlipping) scheduleNextAutoFlip();
   });
 
-  el.compactBtn.addEventListener('click', () => {
-    applyCompact(!document.body.classList.contains('compact'));
-  });
 
   el.playAgainBtn.addEventListener('click', () => {
     if (el.endDialog.close) el.endDialog.close();
@@ -1659,11 +1651,12 @@
     try { Plotly.Plots.resize($('chart')); } catch {}
   });
 
+  document.body.classList.remove('compact');
+  try { localStorage.removeItem('compact'); } catch {}
   updateOutcome('Welcome! Enter a bet and press Flip.');
   initChart();
   render();
   el.msLabel.textContent = String(state.autoDelayMs);
-  applyCompact(localStorage.getItem('compact') === '1');
 })();
 </script>
 </body>
