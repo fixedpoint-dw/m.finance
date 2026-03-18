@@ -869,7 +869,7 @@
     <div class="shell">
       <div class="topbar">
         <div class="title-wrap">
-          <div class="title">🪙 Coin Flip Betting Game by J Han</div>
+          <div class="title">🪙 Coin Flip Betting Game</div>
           <div class="subrow">
             <span class="pill">Biased coin: Heads 60% • Tails 40%</span>
           </div>
@@ -982,9 +982,9 @@
             <div class="speed-row">
               <div class="speed-head">
                 <span>Auto speed</span>
-                <span><span id="msLabel">700</span> ms per round target</span>
+                <span><span id="msLabel">700</span> ms per round</span>
               </div>
-              <input id="speed" type="range" min="200" max="1800" step="50" value="700" style="width:100%;" />
+              <input id="speed" type="range" min="200" max="1800" step="50" value="1300" style="width:100%;" />
             </div>
 
             <div class="actions-row">
@@ -1091,6 +1091,32 @@
   const fmtCents = (cents) => fmt(cents / 100);
   const currentMode = () => modeRadios.find(r => r.checked)?.value || 'amount';
   const COIN_ANIMATION_MS = prefersReducedMotion ? 280 : 780;
+  const HEAD_PROBABILITY = 0.60;
+  const SPEED_SLIDER_MIN = 200;
+  const SPEED_SLIDER_MAX = 1800;
+
+  function autoDelayFromSliderValue(value) {
+    const v = Math.max(SPEED_SLIDER_MIN, Math.min(SPEED_SLIDER_MAX, Number(value) || SPEED_SLIDER_MIN));
+    return SPEED_SLIDER_MIN + SPEED_SLIDER_MAX - v;
+  }
+
+  function sliderValueFromAutoDelay(delay) {
+    const d = Math.max(SPEED_SLIDER_MIN, Math.min(SPEED_SLIDER_MAX, Number(delay) || SPEED_SLIDER_MIN));
+    return SPEED_SLIDER_MIN + SPEED_SLIDER_MAX - d;
+  }
+
+  function randomUnit() {
+    if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+      const buf = new Uint32Array(1);
+      window.crypto.getRandomValues(buf);
+      return buf[0] / 4294967296;
+    }
+    return Math.random();
+  }
+
+  function flipBiasedCoin() {
+    return randomUnit() < HEAD_PROBABILITY ? 'H' : 'T';
+  }
 
   function cleanNumericText(raw) {
     return String(raw || '').trim().replace(/,/g, '').replace(/\s+/g, '').replace(/^\$/,'');
@@ -1523,7 +1549,7 @@
     }
 
     const betC = Math.max(0, Math.min(state.wealthC, parsed.betC ?? 0));
-    const outcome = Math.random() < 0.60 ? 'H' : 'T';
+    const outcome = flipBiasedCoin();
     const wealthBeforeC = state.wealthC;
 
     state.isFlipping = true;
@@ -1617,7 +1643,7 @@
 
 
   el.speed.addEventListener('input', () => {
-    state.autoDelayMs = Number(el.speed.value);
+    state.autoDelayMs = autoDelayFromSliderValue(el.speed.value);
     el.msLabel.textContent = String(state.autoDelayMs);
     if (state.autoActive && !state.isFlipping) scheduleNextAutoFlip();
   });
@@ -1656,6 +1682,7 @@
   updateOutcome('Welcome! Enter a bet and press Flip.');
   initChart();
   render();
+  el.speed.value = String(sliderValueFromAutoDelay(state.autoDelayMs));
   el.msLabel.textContent = String(state.autoDelayMs);
 })();
 </script>
